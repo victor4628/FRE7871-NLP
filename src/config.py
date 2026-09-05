@@ -42,6 +42,7 @@ ALT_BENCHMARK = "ARKK"               # thematic-peer benchmark, robustness check
 
 EVENT_WINDOW = (0, 3)                # LM's day [0,+3] filing-period window
 PREEVENT_WINDOW = (-60, -6)          # used for the momentum / liquidity controls
+POSTEVENT_WINDOW = (4, 63)           # realised volatility after the filing is absorbed
 
 MIN_PRICE = 3.00                     # price on day -1 must be at least this
 MIN_WORDS_10K = 2000                 # LM's filter

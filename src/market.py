@@ -99,6 +99,22 @@ def buy_and_hold_return(series: pd.Series, start: pd.Timestamp, end: pd.Timestam
     return float(s.iloc[i1] / s.iloc[i0 - 1] - 1.0)
 
 
+def realised_volatility(series: pd.Series, start: pd.Timestamp, end: pd.Timestamp,
+                        annualise: bool = True) -> float:
+    """Standard deviation of daily returns between two dates, inclusive.
+
+    Used for the uncertainty test: annualised by the usual sqrt(252). Returns nan
+    if fewer than ten observations fall in the window, because a standard
+    deviation on five days is not a measurement.
+    """
+    s = series.dropna()
+    rets = s.pct_change().loc[pd.Timestamp(start):pd.Timestamp(end)].dropna()
+    if len(rets) < 10:
+        return np.nan
+    sd = float(rets.std(ddof=1))
+    return sd * np.sqrt(252) if annualise else sd
+
+
 # ---------------------------------------------------------------------------
 # YOUR CODE
 # ---------------------------------------------------------------------------

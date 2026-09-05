@@ -12,7 +12,7 @@ import pandas as pd
 
 from .config import (
     MIN_PRICE, MIN_TRADING_DAYS_AFTER, MIN_TRADING_DAYS_BEFORE,
-    MIN_WORDS_10K, MIN_WORDS_10Q, PREEVENT_WINDOW,
+    MIN_WORDS_10K, MIN_WORDS_10Q, POSTEVENT_WINDOW, PREEVENT_WINDOW,
 )
 
 
@@ -54,7 +54,8 @@ def apply_filters(
       5. A usable day 0 (see market.effective_event_day).
       6. Price on day -1 of at least MIN_PRICE dollars.
       7. At least MIN_TRADING_DAYS_BEFORE trading days of returns before day 0 and
-         MIN_TRADING_DAYS_AFTER after, so the controls and the event window exist.
+         MIN_TRADING_DAYS_AFTER after, so the controls, the event window and the
+         post-filing volatility window all exist.
 
     TODO(student). Return the filtered panel and the Waterfall object.
     """
@@ -85,6 +86,13 @@ def add_controls(
                       (stands in for LM's pre-filing-date Fama-French alpha)
       is_10k          1 for a 10-K, 0 for a 10-Q
       quarter         calendar quarter of day 0, for fixed effects
+      pre_vol         annualised realised volatility over PREEVENT_WINDOW
+      post_vol        annualised realised volatility over POSTEVENT_WINDOW,
+                      days [+4,+63], the dependent variable of Table 5
+
+    pre_vol is not decoration. It is the control that decides whether Table 5
+    says anything: volatile companies write hedged filings, so without it the
+    uncertainty coefficient just re-measures the stock's own volatility.
 
     Optional, for extra credit: book-to-market from the XBRL company-facts API
     (us-gaap:StockholdersEquity as of the filing's report date).
