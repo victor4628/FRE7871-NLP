@@ -1,4 +1,4 @@
-# Assignment 1 — Loughran-McDonald sentiment on the ARK universe
+# Assignment 1: Uncertainty and Sentiment Analysis of Quarterly and Annual Financial Reports
 
 FRE-GY 7871 A · NLP and the Investment Process · Fall 2026
 Out: Session 1 (5 Sep 2026) · Due: 9:00 AM, Session 2 (12 Sep 2026)
@@ -7,6 +7,10 @@ You are replicating the core of Loughran & McDonald (2011), *"When Is a Liabilit
 Not a Liability? Textual Analysis, Dictionaries, and 10-Ks"*, on a small modern
 sample: five years of 10-K and 10-Q filings from the companies held by six ARK
 Invest ETFs.
+
+Two dimensions, kept separate throughout: **negative sentiment** (H4N-Inf against
+Fin-Neg, tested on returns) and **uncertainty sentiment** (Fin-Unc, tested on returns
+and on realised volatility after the filing).
 
 The full assignment brief is on Brightspace. This file is about running the code.
 

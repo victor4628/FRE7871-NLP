@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "notebooks" / "assignment1.ipynb"
 
 CELLS: list[tuple[str, str]] = [
-    ("md", """# Assignment 1: Negative and Uncertainty Sentiment on the ARK Universe
+    ("md", """# Assignment 1: Uncertainty and Sentiment Analysis of Quarterly and Annual Financial Reports
 
 FRE-GY 7871 A · NLP and the Investment Process · Fall 2026
 

@@ -1,13 +1,14 @@
 # Assignment 1 report
 
+### Uncertainty and Sentiment Analysis of Quarterly and Annual Financial Reports
+
 FRE-GY 7871 A · NLP and the Investment Process
 
 **Name:**
 **NetID:**
 **GitHub repo:**
 
-Target length 1,200–1,500 words plus exhibits, roughly four to six pages. Export
-to PDF and upload to Brightspace. Prose over bullet points where a sentence will
+Export to PDF and upload to Brightspace. Keep it short. Prose over bullet points where a sentence will
 do; the writing is graded alongside the code.
 
 ---
@@ -37,25 +38,30 @@ The two weighting schemes, with equation (1) written out and your reading of the
 ambiguous terms. The regression specification and the standard errors, with a
 sentence on why you clustered the way you did.
 
-## 5. Results
+## 5. Results: negative sentiment
 
-**Table 2** summary statistics · **Table 3** top thirty words per list ·
-**Figure 1** median excess return by quintile · **Table 4** regressions.
+**Table 2** summary statistics · **Table 3** panels A and B, top thirty words ·
+**Figure 1** median excess return by quintile · **Table 4** return regressions.
 
-Answer the five questions from the brief here, in order. Question 5 (power) must
-appear before you interpret Table 4.
+## 6. Results: uncertainty sentiment
 
-## 6. 10-K versus 10-Q
+**Table 3** panel C · **Table 5** post-filing volatility regressions, reported both
+with and without the pre-filing volatility control · **Figure 2**.
+
+Answer the six questions from the brief across these two sections, in order.
+Question 6 (power) must appear before you interpret Table 4.
+
+## 7. 10-K versus 10-Q
 
 What differs, and whether the tone-return relation differs with it.
 
-## 7. Limitations
+## 8. Limitations
 
 Survivorship in this universe, with a number. Sample size and what it can detect.
 Benchmark choice. Anything you tried that did not work — list every specification
 you ran, not only the one you are reporting.
 
-## 8. What I would do next
+## 9. What I would do next
 
 Two or three sentences. What is the single change that would most improve this
 test, and what would it cost?
