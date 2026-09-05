@@ -39,6 +39,7 @@ FORMS = ["10-K", "10-Q"]             # amendments (10-K/A, 10-Q/A) are excluded
 
 BENCHMARK = "SPY"                    # stands in for the CRSP value-weighted index
 ALT_BENCHMARK = "ARKK"               # thematic-peer benchmark, robustness check
+VIX_TICKER = "^VIX"                  # market-implied uncertainty, for the trend figure
 
 EVENT_WINDOW = (0, 3)                # LM's day [0,+3] filing-period window
 PREEVENT_WINDOW = (-60, -6)          # used for the momentum / liquidity controls
@@ -59,8 +60,14 @@ LM_MASTER_DICT_URL = (
 )
 LM_MASTER_DICT_PATH = LEXICON_DIR / "LoughranMcDonald_MasterDictionary.csv"
 
+# Optional. The Harvard General Inquirer negative list is NOT required for this
+# assignment; it is here only for the extra-credit comparison in the brief.
 HARVARD_GI_URL = "https://inquirer.sites.fas.harvard.edu/inqtabs.txt"
 HARVARD_GI_PATH = LEXICON_DIR / "inqtabs.txt"
+
+# Economic Policy Uncertainty index (Baker, Bloom & Davis), free, monthly.
+# An optional external series to plot against your own uncertainty measure.
+EPU_MONTHLY_URL = "https://www.policyuncertainty.com/media/US_Policy_Uncertainty_Data.xlsx"
 
 LM_CATEGORIES = [
     "Negative", "Positive", "Uncertainty",

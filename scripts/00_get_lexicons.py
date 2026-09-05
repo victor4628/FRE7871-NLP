@@ -1,14 +1,15 @@
-"""Download the two word lists into data/lexicons/.
+"""Download the word lists into data/lexicons/.
 
-    python scripts/00_get_lexicons.py
+    python scripts/00_get_lexicons.py                  # what the assignment needs
+    python scripts/00_get_lexicons.py --with-harvard   # plus the extra-credit list
 
 Sources
   Loughran-McDonald Master Dictionary  https://sraf.nd.edu/loughranmcdonald-master-dictionary/
-  Harvard General Inquirer (inqtabs)   https://inquirer.sites.fas.harvard.edu/
+  Harvard General Inquirer (optional)  https://inquirer.sites.fas.harvard.edu/
 
-Both are free. If a link has rotted since this was written, go to the pages above,
-download by hand, and drop the files in data/lexicons/ under the names in
-src/config.py. Do not silently substitute a different word list.
+Free. If a link has rotted since this was written, go to the page above, download
+by hand, and drop the file in data/lexicons/ under the name in src/config.py.
+Do not silently substitute a different word list.
 """
 
 import sys
@@ -21,17 +22,27 @@ from src.config import (  # noqa: E402
     HARVARD_GI_PATH, HARVARD_GI_URL, LM_MASTER_DICT_PATH, LM_MASTER_DICT_URL,
 )
 
-TARGETS = [
+REQUIRED = [
     ("Loughran-McDonald Master Dictionary", LM_MASTER_DICT_URL, LM_MASTER_DICT_PATH),
+]
+OPTIONAL = [
     ("Harvard General Inquirer (inqtabs.txt)", HARVARD_GI_URL, HARVARD_GI_PATH),
 ]
 
 
 def main() -> int:
+    import argparse
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--with-harvard", action="store_true",
+                    help="also fetch the Harvard General Inquirer (extra credit only)")
+    args = ap.parse_args()
+    targets = REQUIRED + (OPTIONAL if args.with_harvard else [])
+
     session = requests.Session()
     session.headers.update({"User-Agent": "Mozilla/5.0 (course assignment)"})
     failures = 0
-    for name, url, path in TARGETS:
+    for name, url, path in targets:
         if path.exists() and path.stat().st_size > 10_000:
             print(f"[skip] {name} already at {path} ({path.stat().st_size/1e6:.1f} MB)")
             continue

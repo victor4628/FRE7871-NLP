@@ -38,30 +38,37 @@ The two weighting schemes, with equation (1) written out and your reading of the
 ambiguous terms. The regression specification and the standard errors, with a
 sentence on why you clustered the way you did.
 
-## 5. Results: negative sentiment
+## 5. What the measures are made of
 
-**Table 2** summary statistics · **Table 3** panels A and B, top thirty words ·
-**Figure 1** median excess return by quintile · **Table 4** return regressions.
+**Table 2** summary statistics, 10-K and 10-Q separately, with the correlation between
+the two measures. **Table 3** the thirty most frequent words on each list. Answer Q1
+and Q2 here.
 
-## 6. Results: uncertainty sentiment
+## 6. Trends, 2021-2025
 
-**Table 3** panel C · **Table 5** post-filing volatility regressions, reported both
-with and without the pre-filing volatility control · **Figure 2**.
+**Figure 1** and **Table 4**. State the composition corrections you applied before
+describing anything. Give the aggregate trend with both OLS and Newey-West
+t-statistics, and lead with the within-firm result. Answer Q3, including which of the
+two readings of the trend your own evidence supports.
 
-Answer the six questions from the brief across these two sections, in order.
-Question 6 (power) must appear before you interpret Table 4.
+## 7. Uncertainty, volatility and returns
 
-## 7. 10-K versus 10-Q
+**Table 5**, reported both with and without the pre-filing volatility control, and the
+difference explained. Then **Table 6**, the return test, with the power arithmetic
+stated before you interpret it. Answer Q4 and Q6.
 
-What differs, and whether the tone-return relation differs with it.
+## 8. 10-K versus 10-Q
 
-## 8. Limitations
+What differs between the two form types, and whether your trend and volatility
+results differ with it. Answer Q5.
 
-Survivorship in this universe, with a number. Sample size and what it can detect.
-Benchmark choice. Anything you tried that did not work — list every specification
-you ran, not only the one you are reporting.
+## 9. Limitations
 
-## 9. What I would do next
+Survivorship, with a number, including the sharper version of it for the trend work:
+survivors are the firms that did not blow up. Twenty quarters is a short series.
+Benchmark choice. And every specification you ran, not only the one you are reporting.
+
+## 10. What I would do next
 
 Two or three sentences. What is the single change that would most improve this
 test, and what would it cost?

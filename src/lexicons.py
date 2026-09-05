@@ -1,13 +1,16 @@
-"""Loading the two word lists the paper compares.
+"""Loading the word lists.
 
-Fin-Neg and friends come straight from the Loughran-McDonald Master Dictionary.
-H4N-Inf has to be rebuilt, because the Harvard General Inquirer is distributed as
-root words only. LM expanded 2,005 Harvard roots into 4,187 inflected forms by
-hand. We approximate that with conservative morphological rules, keeping only
-forms that actually occur in 10-X filings (the master dictionary's vocabulary).
+Everything you need comes from one file, the Loughran-McDonald Master Dictionary:
 
-You will get roughly 5,000 forms, not 4,187. That is a real deviation from the
-paper and you are expected to say so in your report.
+    Negative      Fin-Neg, 2,355 words. How bad the news is.
+    Uncertainty   Fin-Unc,   297 words. How sure management is.
+    Positive, Litigious, Strong_Modal, Weak_Modal  -- available, not required.
+
+The rest of this module rebuilds the Harvard General Inquirer negative list. That
+is OPTIONAL, for the extra-credit comparison only. The Harvard file ships root
+words, so LM expanded 2,005 roots into 4,187 inflected forms by hand; the rules
+here approximate that and land nearer 5,000, which is a real deviation you would
+have to disclose if you use it.
 """
 
 from __future__ import annotations
@@ -98,9 +101,18 @@ def h4n_inflected(master: pd.DataFrame | None = None) -> set[str]:
     return out
 
 
-def load_all() -> dict[str, set[str]]:
-    """Every word list the assignment needs, in one dictionary."""
+def load_all(include_harvard: bool = False) -> dict[str, set[str]]:
+    """The word lists the assignment needs, in one dictionary.
+
+    All six Loughran-McDonald categories. The two you are graded on are
+    ``Negative`` (Fin-Neg) and ``Uncertainty`` (Fin-Unc).
+
+    ``include_harvard=True`` adds the rebuilt Harvard list under "H4N_Inf".
+    That comparison is extra credit only, and it needs inqtabs.txt, which
+    ``scripts/00_get_lexicons.py --with-harvard`` downloads.
+    """
     master = load_master_dictionary()
     lists = lm_word_lists(master)
-    lists["H4N_Inf"] = h4n_inflected(master)
+    if include_harvard:
+        lists["H4N_Inf"] = h4n_inflected(master)
     return lists

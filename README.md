@@ -8,9 +8,13 @@ Not a Liability? Textual Analysis, Dictionaries, and 10-Ks"*, on a small modern
 sample: five years of 10-K and 10-Q filings from the companies held by six ARK
 Invest ETFs.
 
-Two dimensions, kept separate throughout: **negative sentiment** (H4N-Inf against
-Fin-Neg, tested on returns) and **uncertainty sentiment** (Fin-Unc, tested on returns
-and on realised volatility after the filing).
+Two dimensions, kept separate throughout: **sentiment** (Fin-Neg, how bad the news
+is, tested against the filing-period return) and **uncertainty** (Fin-Unc, how sure
+management is, tested against realised volatility after the filing).
+
+The centre of the assignment is the **time series**: how both measures moved across
+the twenty quarters of 2021-2025, and whether that movement survives the composition
+corrections and an honest standard error.
 
 The full assignment brief is on Brightspace. This file is about running the code.
 
@@ -36,10 +40,10 @@ export SEC_USER_AGENT="Your Name your.netid@nyu.edu"     # bash
 Then, in order:
 
 ```bash
-python scripts/00_get_lexicons.py        # word lists            ~15 s
-python scripts/01_build_universe.py      # 93 filers             ~1 min
-python scripts/02_download_filings.py    # ~1,700 filings        ~25 min
-python scripts/03_get_market_data.py     # prices, volume, shares ~3 min
+python scripts/00_get_lexicons.py        # word lists              ~15 s
+python scripts/01_build_universe.py      # 124 -> 93 filers        ~1 min
+python scripts/02_download_filings.py    # ~1,700 filings          ~25 min
+python scripts/03_get_market_data.py     # prices, VIX, shares     ~3 min
 jupyter lab notebooks/assignment1.ipynb
 ```
 
@@ -61,7 +65,7 @@ Finished — read it, do not rewrite it:
 |---|---|
 | `src/edgar.py` | Rate-limited, cached EDGAR client. Returns point-in-time metadata including `acceptanceDateTime`. |
 | `src/parse.py` | Filing HTML to tokens. Strips inline-XBRL scaffolding and mostly-numeric tables. |
-| `src/lexicons.py` | Loads the LM master dictionary; rebuilds H4N-Inf from the Harvard General Inquirer. |
+| `src/lexicons.py` | Loads Fin-Neg and Fin-Unc from the LM master dictionary. (It can also rebuild the Harvard list, which is extra credit only.) |
 | `src/market.py` (top half) | Price/volume download, trading calendar, buy-and-hold helper. |
 | `scripts/00`–`03` | The data pipeline. |
 
@@ -72,7 +76,7 @@ Yours — every function raising `NotImplementedError`:
 | `src/score.py` | Proportional and tf.idf (equation 1) tone measures. |
 | `src/market.py` (bottom) | `effective_event_day`, `excess_return`. |
 | `src/panel.py` | Sample filters with a waterfall, and the controls. |
-| `src/analysis.py` | Tables 2, 3 and 4, Figure 1, and the power check. |
+| `src/analysis.py` | Tables 2 to 6, Figures 1 and 2, and the power check. |
 
 ## Tests
 
@@ -102,6 +106,10 @@ up to 72 hours.
 - Treating the EDGAR filing date as tradable without checking the acceptance time.
 - Computing tf.idf statistics on one corpus and running regressions on another.
 - Reporting a filter you applied without listing it in Table 1.
-- Reporting a significant result without saying what your sample size can detect.
-- A conclusion the standard errors do not support. A clean null result, honestly
-  established, earns full marks.
+- Plotting a quarterly tone average without separating 10-Ks from 10-Qs. The annual
+  sawtooth you will see is a calendar artefact, not a trend.
+- An aggregate trend test with plain OLS standard errors. Twenty observations of a
+  persistent series need Newey-West, and the within-firm test is the better one.
+- Reporting the volatility regression without the pre-filing volatility control.
+- A conclusion the standard errors do not support, in either direction. Not every
+  test here is underpowered, and saying so blankly is as wrong as over-claiming.

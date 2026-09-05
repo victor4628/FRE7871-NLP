@@ -28,7 +28,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.config import (  # noqa: E402
     ALT_BENCHMARK, BENCHMARK, INTERIM_DIR, PRICE_DIR, SAMPLE_END, SAMPLE_START,
-    SEC_USER_AGENT,
+    SEC_USER_AGENT, VIX_TICKER,
 )
 from src.edgar import EdgarClient  # noqa: E402
 from src.market import download_prices, download_volume  # noqa: E402
@@ -81,7 +81,7 @@ def get_shares(client: EdgarClient, meta: pd.DataFrame) -> pd.DataFrame:
 
 def main() -> int:
     meta = pd.read_csv(INTERIM_DIR / "filings_meta.csv", dtype={"cik": str})
-    tickers = sorted(meta["ticker"].unique()) + [BENCHMARK, ALT_BENCHMARK]
+    tickers = sorted(meta["ticker"].unique()) + [BENCHMARK, ALT_BENCHMARK, VIX_TICKER]
     print(f"{len(set(tickers))} tickers, {SAMPLE_START} to {SAMPLE_END}")
 
     px = download_prices(tickers, PRICE_START, PRICE_END)
@@ -92,6 +92,10 @@ def main() -> int:
 
     vol = download_volume(tickers, PRICE_START, PRICE_END)
     print(f"volume:  {vol.shape[0]} days x {vol.shape[1]} tickers -> {PRICE_DIR / 'volume.csv'}")
+
+    if VIX_TICKER in px.columns:
+        print(f"VIX:     {px[VIX_TICKER].notna().sum()} days, mean "
+              f"{px[VIX_TICKER].mean():.1f} (for the Figure 1 overlay)")
 
     client = EdgarClient(SEC_USER_AGENT or None)
     shares = get_shares(client, meta)
