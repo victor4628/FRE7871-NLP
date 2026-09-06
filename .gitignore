@@ -15,3 +15,7 @@ venv/
 .DS_Store
 outputs/*
 !outputs/.gitkeep
+
+# Instructor-built data archive, distributed as a GitHub Release asset
+ark_filings_*.tar.gz
+download.log

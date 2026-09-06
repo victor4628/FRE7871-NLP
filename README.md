@@ -12,14 +12,30 @@ only covers running the pipeline.
 
 ## What this gives you
 
-Four scripts that put a clean dataset on your disk:
+Scripts that put a clean dataset on your disk. There are two ways to get the filings.
+
+**The fast path**, if your instructor has published the prepared archive:
 
 | Script | Output | Time |
 |---|---|---|
 | `00_get_lexicons.py` | The Loughran-McDonald Master Dictionary, in `data/lexicons/` | ~15 s |
-| `01_build_universe.py` | The 124 ARK holdings resolved to SEC filers, in `data/universe/universe.csv` | ~1 min |
-| `02_download_filings.py` | ~1,700 filings as extracted text, plus `data/interim/filings_meta.csv` | ~25 min |
-| `03_get_market_data.py` | Daily prices, volume, VIX and per-filing share counts, in `data/prices/` | ~3 min |
+| `fetch_data.py` | All ~1,700 filings as text, plus metadata, universe and share counts | ~1 min |
+| `03_get_market_data.py` | Daily prices, volume and VIX, in `data/prices/` | ~3 min |
+
+**The slow path**, which builds the same files from EDGAR yourself:
+
+| Script | Output | Time |
+|---|---|---|
+| `00_get_lexicons.py` | The Loughran-McDonald Master Dictionary | ~15 s |
+| `01_build_universe.py` | The 124 ARK holdings resolved to SEC filers | ~1 min |
+| `02_download_filings.py` | ~1,700 filings as extracted text, plus `filings_meta.csv` | ~25 min |
+| `03_get_market_data.py` | Daily prices, volume, VIX and per-filing share counts | ~3 min |
+
+Either is fine. Do the slow path once if you want to see what a point-in-time
+crawler actually does; the archive is there so that twenty of us do not hit the SEC
+with the same 1,700 requests in the same week. **Say in your report which one you
+used.** If you built it yourself and your filing count differs from the archive's,
+say that too, and work out why.
 
 The modules they lean on, which you can read and use as they are:
 
@@ -63,7 +79,15 @@ $env:SEC_USER_AGENT = "Your Name your.netid@nyu.edu"     # PowerShell
 export SEC_USER_AGENT="Your Name your.netid@nyu.edu"     # bash
 ```
 
-Then, in order:
+Then either:
+
+```bash
+python scripts/00_get_lexicons.py
+python scripts/fetch_data.py            # the prepared archive
+python scripts/03_get_market_data.py
+```
+
+or, building it yourself:
 
 ```bash
 python scripts/00_get_lexicons.py
@@ -75,6 +99,9 @@ python scripts/03_get_market_data.py
 
 Add `--drop-html` to `02` if you are short on disk: it deletes the raw filings after
 extracting the text, at the cost of re-downloading if you change the parser.
+
+Prices are never in the archive. They come from Yahoo, whose terms do not permit us
+to redistribute them, so `03` always runs on your machine. It takes three minutes.
 
 Nothing under `data/` is committed except the frozen ARK holdings snapshot.
 Everything else there is reproducible from these four scripts, which is the point.
@@ -110,9 +137,6 @@ report_date, **acceptance_datetime**, accession, n_words, n_distinct, text_path.
   `data/prices/shares.csv`; use that one.
 - Treating the EDGAR filing date as tradable without checking `acceptance_datetime`.
 - Computing tf.idf statistics on one corpus and running regressions on another.
-- Plotting a quarterly tone average without separating 10-Ks from 10-Qs. The annual
-  sawtooth you will see is a calendar artefact, not a trend.
-- An aggregate trend test with plain OLS standard errors.
-- Reporting the volatility regression without the pre-filing volatility control.
 - Reporting a filter you applied without listing it in Table 1.
+- Describing what a chart shows before asking what else is in it.
 - A conclusion the standard errors do not support, in either direction.
