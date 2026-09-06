@@ -12,30 +12,14 @@ only covers running the pipeline.
 
 ## What this gives you
 
-Scripts that put a clean dataset on your disk. There are two ways to get the filings.
-
-**The fast path**, if your instructor has published the prepared archive:
+Four scripts that put a clean dataset on your disk:
 
 | Script | Output | Time |
 |---|---|---|
 | `00_get_lexicons.py` | The Loughran-McDonald Master Dictionary, in `data/lexicons/` | ~15 s |
-| `fetch_data.py` | All ~1,700 filings as text, plus metadata, universe and share counts | ~1 min |
-| `03_get_market_data.py` | Daily prices, volume and VIX, in `data/prices/` | ~3 min |
-
-**The slow path**, which builds the same files from EDGAR yourself:
-
-| Script | Output | Time |
-|---|---|---|
-| `00_get_lexicons.py` | The Loughran-McDonald Master Dictionary | ~15 s |
-| `01_build_universe.py` | The 124 ARK holdings resolved to SEC filers | ~1 min |
-| `02_download_filings.py` | ~1,700 filings as extracted text, plus `filings_meta.csv` | ~25 min |
-| `03_get_market_data.py` | Daily prices, volume, VIX and per-filing share counts | ~3 min |
-
-Either is fine. Do the slow path once if you want to see what a point-in-time
-crawler actually does; the archive is there so that twenty of us do not hit the SEC
-with the same 1,700 requests in the same week. **Say in your report which one you
-used.** If you built it yourself and your filing count differs from the archive's,
-say that too, and work out why.
+| `01_build_universe.py` | The 124 ARK holdings resolved to SEC filers, in `data/universe/universe.csv` | ~1 min |
+| `02_download_filings.py` | ~1,700 filings as extracted text, plus `data/interim/filings_meta.csv` | ~25 min |
+| `03_get_market_data.py` | Daily prices, volume, VIX and per-filing share counts, in `data/prices/` | ~3 min |
 
 The modules they lean on, which you can read and use as they are:
 
@@ -46,6 +30,21 @@ The modules they lean on, which you can read and use as they are:
 | `src/lexicons.py` | Loads Fin-Neg and Fin-Unc out of the master dictionary. |
 | `src/market.py` | Downloads daily prices and volume. Nothing else. |
 | `src/config.py` | The sample definition: funds, window, forms, paths. |
+
+### If the download will not run
+
+**Try it properly first.** Getting a point-in-time dataset off EDGAR is part of the
+assignment, and most failures are fixable in a minute:
+
+- `RuntimeError` about the user agent: you have not set `SEC_USER_AGENT`. See Setup.
+- 403s or hangs partway through: you are being rate-limited. The scripts already
+  throttle to six requests a second; re-run and they resume from the cache.
+- The run dies overnight: it is resumable. Run it again, it skips what it has.
+- Disk pressure: add `--drop-html`.
+
+If you have genuinely tried and it still will not work, email
+**axs10695@nyu.edu** and the corpus will be sent to you directly. Do that only
+after attempting the download, and say what you tried and what the error was.
 
 ## What you write
 
@@ -79,15 +78,7 @@ $env:SEC_USER_AGENT = "Your Name your.netid@nyu.edu"     # PowerShell
 export SEC_USER_AGENT="Your Name your.netid@nyu.edu"     # bash
 ```
 
-Then either:
-
-```bash
-python scripts/00_get_lexicons.py
-python scripts/fetch_data.py            # the prepared archive
-python scripts/03_get_market_data.py
-```
-
-or, building it yourself:
+Then, in order:
 
 ```bash
 python scripts/00_get_lexicons.py
@@ -97,11 +88,11 @@ python scripts/02_download_filings.py             # the real run, ~25 min
 python scripts/03_get_market_data.py
 ```
 
+Run the `--limit 3` version first. It takes a minute and tells you whether your
+setup works before you commit to the full crawl.
+
 Add `--drop-html` to `02` if you are short on disk: it deletes the raw filings after
 extracting the text, at the cost of re-downloading if you change the parser.
-
-Prices are never in the archive. They come from Yahoo, whose terms do not permit us
-to redistribute them, so `03` always runs on your machine. It takes three minutes.
 
 Nothing under `data/` is committed except the frozen ARK holdings snapshot.
 Everything else there is reproducible from these four scripts, which is the point.
