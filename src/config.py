@@ -1,4 +1,9 @@
-"""Central configuration. Change things here, not scattered through the notebook."""
+"""Central configuration for the data pipeline.
+
+This file defines the sample: which funds, which window, which forms. The
+analysis parameters (event windows, filter thresholds) are specified in the
+assignment brief and are yours to set.
+"""
 
 import os
 from pathlib import Path
@@ -37,19 +42,10 @@ SAMPLE_START = "2021-01-01"          # filing date, inclusive
 SAMPLE_END = "2025-12-31"            # filing date, inclusive
 FORMS = ["10-K", "10-Q"]             # amendments (10-K/A, 10-Q/A) are excluded
 
+# Series downloaded alongside the filers, for you to use as benchmarks.
 BENCHMARK = "SPY"                    # stands in for the CRSP value-weighted index
-ALT_BENCHMARK = "ARKK"               # thematic-peer benchmark, robustness check
-VIX_TICKER = "^VIX"                  # market-implied uncertainty, for the trend figure
-
-EVENT_WINDOW = (0, 3)                # LM's day [0,+3] filing-period window
-PREEVENT_WINDOW = (-60, -6)          # used for the momentum / liquidity controls
-POSTEVENT_WINDOW = (4, 63)           # realised volatility after the filing is absorbed
-
-MIN_PRICE = 3.00                     # price on day -1 must be at least this
-MIN_WORDS_10K = 2000                 # LM's filter
-MIN_WORDS_10Q = 1000                 # scaled down: 10-Qs are shorter
-MIN_TRADING_DAYS_BEFORE = 60
-MIN_TRADING_DAYS_AFTER = 60
+ALT_BENCHMARK = "ARKK"               # thematic-peer benchmark
+VIX_TICKER = "^VIX"                  # market-implied uncertainty
 
 # ----------------------------------------------------------------------------
 # Word-list downloads (verified working 2026-09-05; if a link rots, see README)

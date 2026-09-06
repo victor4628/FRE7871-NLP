@@ -3,20 +3,46 @@
 FRE-GY 7871 A · NLP and the Investment Process · Fall 2026
 Out: Session 1 (5 Sep 2026) · Due: 9:00 AM, Session 2 (12 Sep 2026)
 
-You are replicating the core of Loughran & McDonald (2011), *"When Is a Liability
-Not a Liability? Textual Analysis, Dictionaries, and 10-Ks"*, on a small modern
-sample: five years of 10-K and 10-Q filings from the companies held by six ARK
-Invest ETFs.
+**This repository gets you the data. Everything after that is yours to write.**
 
-Two dimensions, kept separate throughout: **sentiment** (Fin-Neg, how bad the news
-is, tested against the filing-period return) and **uncertainty** (Fin-Unc, how sure
-management is, tested against realised volatility after the filing).
+The full assignment brief is on Brightspace and it is the specification. This file
+only covers running the pipeline.
 
-The centre of the assignment is the **time series**: how both measures moved across
-the twenty quarters of 2021-2025, and whether that movement survives the composition
-corrections and an honest standard error.
+---
 
-The full assignment brief is on Brightspace. This file is about running the code.
+## What this gives you
+
+Four scripts that put a clean dataset on your disk:
+
+| Script | Output | Time |
+|---|---|---|
+| `00_get_lexicons.py` | The Loughran-McDonald Master Dictionary, in `data/lexicons/` | ~15 s |
+| `01_build_universe.py` | The 124 ARK holdings resolved to SEC filers, in `data/universe/universe.csv` | ~1 min |
+| `02_download_filings.py` | ~1,700 filings as extracted text, plus `data/interim/filings_meta.csv` | ~25 min |
+| `03_get_market_data.py` | Daily prices, volume, VIX and per-filing share counts, in `data/prices/` | ~3 min |
+
+The modules they lean on, which you can read and use as they are:
+
+| Module | What it does |
+|---|---|
+| `src/edgar.py` | Rate-limited, cached EDGAR client. Returns point-in-time filing metadata, including the acceptance timestamp you need for day 0. |
+| `src/parse.py` | Filing HTML to word counts. Strips inline-XBRL scaffolding and mostly-numeric tables. |
+| `src/lexicons.py` | Loads Fin-Neg and Fin-Unc out of the master dictionary. |
+| `src/market.py` | Downloads daily prices and volume. Nothing else. |
+| `src/config.py` | The sample definition: funds, window, forms, paths. |
+
+## What you write
+
+Everything else, in your own notebook, from the specification in the brief:
+
+- the two tone measures, proportional and tf.idf
+- the trading calendar, the day-0 rule, and the filing-period excess return
+- realised volatility before and after each filing
+- the sample filters, the controls, and the waterfall in Table 1
+- all seven exhibits and the regressions behind them
+
+There is no notebook template and there are no tests in this repository. Structure
+your own notebook around the exhibits in the brief, in that order.
 
 ---
 
@@ -29,8 +55,8 @@ python -m venv .venv && .venv\Scripts\activate     # Windows
 pip install -r requirements.txt
 ```
 
-Tell the SEC who you are. They rate-limit and block unidentified traffic, and it
-is their server:
+Tell the SEC who you are. They rate-limit and block unidentified traffic, and it is
+their server:
 
 ```bash
 $env:SEC_USER_AGENT = "Your Name your.netid@nyu.edu"     # PowerShell
@@ -40,76 +66,53 @@ export SEC_USER_AGENT="Your Name your.netid@nyu.edu"     # bash
 Then, in order:
 
 ```bash
-python scripts/00_get_lexicons.py        # word lists              ~15 s
-python scripts/01_build_universe.py      # 124 -> 93 filers        ~1 min
-python scripts/02_download_filings.py    # ~1,700 filings          ~25 min
-python scripts/03_get_market_data.py     # prices, VIX, shares     ~3 min
-jupyter lab notebooks/assignment1.ipynb
+python scripts/00_get_lexicons.py
+python scripts/01_build_universe.py
+python scripts/02_download_filings.py --limit 3   # check your setup first
+python scripts/02_download_filings.py             # the real run, ~25 min
+python scripts/03_get_market_data.py
 ```
 
-Run `python scripts/02_download_filings.py --limit 3` first if you want to check
-your setup before committing to the full download. Add `--drop-html` if you are
-short on disk: it deletes the raw filings after extracting the text, at the cost
-of having to re-download if you change the parser.
+Add `--drop-html` to `02` if you are short on disk: it deletes the raw filings after
+extracting the text, at the cost of re-downloading if you change the parser.
 
-Nothing under `data/` is committed. Everything there is reproducible from the
-scripts, which is the point.
+Nothing under `data/` is committed except the frozen ARK holdings snapshot.
+Everything else there is reproducible from these four scripts, which is the point.
 
----
+## Reading the data you end up with
 
-## What is finished and what is yours
+```python
+import gzip
+import pandas as pd
+from src.lexicons import load_all
+from src.parse import tokenize
 
-Finished — read it, do not rewrite it:
+meta = pd.read_csv("data/interim/filings_meta.csv",
+                   parse_dates=["filing_date", "acceptance_datetime"])
+word_lists = load_all()          # "Negative" and "Uncertainty" are the two you need
 
-| File | What it does |
-|---|---|
-| `src/edgar.py` | Rate-limited, cached EDGAR client. Returns point-in-time metadata including `acceptanceDateTime`. |
-| `src/parse.py` | Filing HTML to tokens. Strips inline-XBRL scaffolding and mostly-numeric tables. |
-| `src/lexicons.py` | Loads Fin-Neg and Fin-Unc from the LM master dictionary. (It can also rebuild the Harvard list, which is extra credit only.) |
-| `src/market.py` (top half) | Price/volume/VIX download, trading calendar, buy-and-hold and realised-volatility helpers. |
-| `scripts/00`–`03` | The data pipeline. |
-
-Yours — every function raising `NotImplementedError`:
-
-| File | What you implement |
-|---|---|
-| `src/score.py` | Proportional and tf.idf (equation 1) tone measures. |
-| `src/market.py` (bottom) | `effective_event_day`, `excess_return`. |
-| `src/panel.py` | Sample filters with a waterfall, and the controls. |
-| `src/analysis.py` | Tables 2 to 6, Figures 1 and 2, and the power check. Figure 1 and Table 4 are the trend work and carry the most marks. |
-
-## Tests
-
-```bash
-pytest -q
+with gzip.open(meta.loc[0, "text_path"], "rt", encoding="utf-8") as fh:
+    tokens = tokenize(fh.read())
 ```
 
-Ten tests pass now (the parser, and the proportional score). Fourteen fail
-until you write the code; they encode a hand-computed worked example of
-equation (1) and the four cases of the day-0 rule. All of them must pass when you
-submit.
+`filings_meta.csv` has one row per filing: ticker, cik, form, filing_date,
+report_date, **acceptance_datetime**, accession, n_words, n_distinct, text_path.
 
 ## Submitting
 
-1. **GitHub.** Push this repo, public or with a viewable link. It must contain the
-   completed notebook with output, your `src/` code, a passing `pytest -q`,
-   `AI_USE.md`, and no data files.
-2. **Brightspace.** Upload `REPORT.pdf` (from `REPORT.md`) and paste the repo URL.
-
-Both are due at 9:00 AM before Session 2. Late work loses 10 points per 24 hours,
-up to 72 hours.
+1. **GitHub.** Push your work here, public or with a viewable link. It must contain
+   your notebook with output saved, your code, `AI_USE.md`, and no data files.
+2. **Brightspace.** Upload your report as a PDF and paste the repo URL.
 
 ## Things that will cost you marks
 
-- Using today's share count with a 2021 price. The share count printed on the
-  filing is in `data/prices/shares.csv`; use it.
-- Treating the EDGAR filing date as tradable without checking the acceptance time.
+- Using today's share count with a 2021 price. The count printed on each filing is in
+  `data/prices/shares.csv`; use that one.
+- Treating the EDGAR filing date as tradable without checking `acceptance_datetime`.
 - Computing tf.idf statistics on one corpus and running regressions on another.
-- Reporting a filter you applied without listing it in Table 1.
 - Plotting a quarterly tone average without separating 10-Ks from 10-Qs. The annual
   sawtooth you will see is a calendar artefact, not a trend.
-- An aggregate trend test with plain OLS standard errors. Twenty observations of a
-  persistent series need Newey-West, and the within-firm test is the better one.
+- An aggregate trend test with plain OLS standard errors.
 - Reporting the volatility regression without the pre-filing volatility control.
-- A conclusion the standard errors do not support, in either direction. Not every
-  test here is underpowered, and saying so blankly is as wrong as over-claiming.
+- Reporting a filter you applied without listing it in Table 1.
+- A conclusion the standard errors do not support, in either direction.
