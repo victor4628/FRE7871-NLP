@@ -63,20 +63,33 @@ def main() -> int:
             acc = f["accession"].replace("-", "")
             text_path = TEXT_DIR / f"{acc}.txt.gz"
             try:
+                text = ""
                 if text_path.exists():
                     with gzip.open(text_path, "rt", encoding="utf-8") as fh:
                         text = fh.read()
-                else:
+                # An empty read means the cache is a stub, was truncated by an
+                # interrupted run, or is an unhydrated cloud-sync placeholder.
+                # Never trust it; fetch again.
+                if not text.strip():
                     raw = client.fetch_document(f["doc_url"], f["accession"])
                     text = html_to_text(raw)
-                    with gzip.open(text_path, "wt", encoding="utf-8") as fh:
+                    tmp = text_path.with_suffix(".tmp")
+                    with gzip.open(tmp, "wt", encoding="utf-8") as fh:
                         fh.write(text)
-                    if args.drop_html:
-                        (FILING_DIR / f"{acc}.html").unlink(missing_ok=True)
+                    tmp.replace(text_path)
                 tokens = tokenize(text)
             except Exception as exc:  # noqa: BLE001
                 failures.append((firm["ticker"], f["accession"], str(exc)))
                 continue
+
+            # Cleanup is best-effort and must never discard a good filing.
+            # On Windows, OneDrive and antivirus both hold brief locks on files
+            # that were just written, which raises WinError 32 here.
+            if args.drop_html:
+                try:
+                    (FILING_DIR / f"{acc}.html").unlink(missing_ok=True)
+                except OSError:
+                    pass
 
             rows.append({
                 "ticker": firm["ticker"],
@@ -99,7 +112,21 @@ def main() -> int:
               f"(running total {len(rows)})")
 
     out = pd.DataFrame(rows)
-    out.to_csv(META_PATH, index=False)
+    # EDGAR company names and SIC descriptions occasionally carry stray newlines,
+    # and a half-flushed CSV is worse than no CSV, so clean the text fields and
+    # write through a temporary file.
+    for col in ("company", "sic_desc"):
+        if col in out.columns:
+            out[col] = out[col].astype(str).str.replace(r"\s+", " ", regex=True).str.strip()
+    tmp_meta = META_PATH.with_suffix(".tmp")
+    out.to_csv(tmp_meta, index=False, lineterminator="\n")
+    tmp_meta.replace(META_PATH)
+
+    check = pd.read_csv(META_PATH)
+    if len(check) != len(out):
+        print(f"WARNING: wrote {len(out)} rows but read back {len(check)}. "
+              f"Inspect {META_PATH} before using it.")
+
     print(f"\nWrote {META_PATH}: {len(out)} filings, "
           f"{out['n_words'].sum() / 1e6:.1f}M words")
     print(out.groupby("form")["n_words"].describe()[["count", "mean", "50%", "min", "max"]])
