@@ -66,7 +66,7 @@ Finished — read it, do not rewrite it:
 | `src/edgar.py` | Rate-limited, cached EDGAR client. Returns point-in-time metadata including `acceptanceDateTime`. |
 | `src/parse.py` | Filing HTML to tokens. Strips inline-XBRL scaffolding and mostly-numeric tables. |
 | `src/lexicons.py` | Loads Fin-Neg and Fin-Unc from the LM master dictionary. (It can also rebuild the Harvard list, which is extra credit only.) |
-| `src/market.py` (top half) | Price/volume download, trading calendar, buy-and-hold helper. |
+| `src/market.py` (top half) | Price/volume/VIX download, trading calendar, buy-and-hold and realised-volatility helpers. |
 | `scripts/00`–`03` | The data pipeline. |
 
 Yours — every function raising `NotImplementedError`:
@@ -76,7 +76,7 @@ Yours — every function raising `NotImplementedError`:
 | `src/score.py` | Proportional and tf.idf (equation 1) tone measures. |
 | `src/market.py` (bottom) | `effective_event_day`, `excess_return`. |
 | `src/panel.py` | Sample filters with a waterfall, and the controls. |
-| `src/analysis.py` | Tables 2 to 6, Figures 1 and 2, and the power check. |
+| `src/analysis.py` | Tables 2 to 6, Figures 1 and 2, and the power check. Figure 1 and Table 4 are the trend work and carry the most marks. |
 
 ## Tests
 

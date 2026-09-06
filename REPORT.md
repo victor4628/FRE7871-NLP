@@ -29,14 +29,16 @@ and where your share counts came from.
 
 ## 3. Word lists
 
-Sizes of each list. How you rebuilt H4N-Inf and how it differs from the paper's
-4,187 forms. The spot check on TAX, COSTS, CAPITAL, LIABILITY.
+Size of each list and the overlap between them. What that overlap implies for how
+independent your two measures really are.
 
 ## 4. Method
 
 The two weighting schemes, with equation (1) written out and your reading of the
-ambiguous terms. The regression specification and the standard errors, with a
-sentence on why you clustered the way you did.
+ambiguous terms. How you aggregated to quarters and what you did about form mix and
+firm mix. The regression specifications and the standard errors, with a sentence each
+on why you clustered the way you did and why the aggregate trend test needs
+Newey-West.
 
 ## 5. What the measures are made of
 
