@@ -12,15 +12,20 @@ limitations of the frozen holdings sample. See [assignment1.ipynb](assignment1.i
 for the executed analysis and [AI_USE.md](AI_USE.md) for authorship disclosure.
 
 The text sample contains 1,624 unique reports from 91 issuers. Annual-report
-negative language increases under both weighting schemes. Controlling for
-existing volatility reduces the pooled uncertainty coefficients by 48.0% and
-56.3%; issuer fixed effects remove that positive association. Negative-language
+negative language increases under both weighting schemes. Tables 5 and 6 each
+compare no controls, size only, prior volatility only, and both. Company size is
+an optional research control, justified explicitly in the PDF. Controlling for
+existing volatility reduces the pooled uncertainty coefficients; adding issuer,
+calendar-quarter and form effects removes that positive association. Negative-language
 coefficients in the four-day excess-return regressions are negative but
 imprecise. These findings do not establish an out-of-sample forecasting strategy.
 
 The updated results retain low-priced stocks, as requested by the student. The
 share and shell-status parser also recognizes ordinary-share wording and legacy
 checkboxes. The return and volatility samples contain 1,592 and 1,591 filings.
+The primary outcome models contain no other regressors or fixed effects. Prior
+return and turnover are no longer calculated. Each four-model comparison keeps
+the sample and tone standardization constant, including for the no-control model.
 
 Regenerate the PDF from the computed tables using:
 

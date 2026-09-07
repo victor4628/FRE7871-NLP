@@ -25,6 +25,13 @@ was a user-directed sample amendment after the initial results, not a rule fixed
 before seeing those results. The supplementary quintile chart was also requested
 after the initial analysis.
 
+The student then requested four primary models for each outcome and weighting
+scheme: no controls, size only, prior volatility only, and both, with size's
+rationale stated in the report. Codex implemented those on common samples and
+removed the earlier prior-return and turnover calculations and primary fixed
+effects. The additional issuer/time-effects specification is reported separately
+as a sensitivity, not hidden inside the four primary models.
+
 **Errors and issues corrected during AI-assisted work:** The initial plan used
 the superseded S&P 500 / 2018-2022 assignment and was replaced by the current ARK
 / 2021-2025 brief. Security records were initially confused with distinct issuers

@@ -305,7 +305,7 @@ def build_market_features(meta):
                 shares, asof, source = f.shares_outstanding, stamp, "same_accession_instant_fact"
         prior_date = sessions[j-1]
         prior_price = nominal.at[prior_date, ticker]
-        size = turnover = np.nan
+        size = np.nan
         if np.isfinite(shares) and pd.notna(asof) and asof <= pd.Timestamp(row.filing_date):
             # Translate the reported share unit to each price/volume date.
             r = ratios[ticker]
@@ -314,10 +314,6 @@ def build_market_features(meta):
                     return shares * r.loc[(r.index > asof) & (r.index <= date)].prod()
                 return shares / r.loc[(r.index > date) & (r.index <= asof)].prod()
             size = prior_price * shares_on(prior_date)
-            vv = actual_volume[ticker].iloc[j-63:j]
-            if vv.notna().all():
-                turnover = float(np.mean([v/shares_on(d) for d, v in vv.items()]))
-        pre_return = buy_hold(pre)
         filing_date = pd.Timestamp(row.filing_date)
         q = filing_date.to_period("Q")
         rows.append({
@@ -325,14 +321,14 @@ def build_market_features(meta):
             "event_shifted": day != filing_date, "quarter": str(q),
             "quarter_of_year": q.quarter, "time": (q.year-2021)*4+q.quarter-1,
             "industry": str(int(row.sic)//100) if pd.notna(row.sic) else "unknown",
-            "pre_vol": pre_vol, "post_vol": post_vol, "pre_return": pre_return,
+            "pre_vol": pre_vol, "post_vol": post_vol,
             "excess_return": 100*(stock_event-buy_hold(returns.SPY.iloc[j:j+4])),
             "excess_return_arkk": 100*(stock_event-buy_hold(returns.ARKK.iloc[j:j+4])),
-            "prior_price": prior_price, "market_value": size, "turnover": turnover,
+            "prior_price": prior_price, "market_value": size,
             "shares_used": shares, "shares_date": asof, "shares_source": source,
         })
     out = meta.merge(pd.DataFrame(rows), on="accession", validate="one_to_one")
-    for c in ["pre_vol", "post_vol", "market_value", "turnover"]:
+    for c in ["pre_vol", "post_vol", "market_value"]:
         out["log_"+c] = np.log(out[c].where(out[c] > 0))
     out.to_csv(ANALYSIS / "filing_features.csv", index=False)
     return out

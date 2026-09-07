@@ -41,7 +41,8 @@ pd.set_option('display.float_format',lambda x:f'{x:.4f}')
     code("r=subprocess.run([sys.executable,'-m','pytest','tests','-q'],cwd=ROOT,capture_output=True,text=True)\nprint(r.stdout)\nassert r.returncode==0,r.stderr")
     md('## Run the complete analysis\nThe initial specification was defined independently of significance. '
        'The student subsequently requested removal of the optional $3 price cutoff; all results below '
-       'use that amended sample, retaining low-priced stocks. '
+       'use that amended sample, retaining low-priced stocks. The outcome models were subsequently revised '
+       'at the student\'s request to no controls, size only, prior volatility only, and both. '
        'Returns and volatility have separate sample waterfalls. Within each specification IDF is estimated on '
        'exactly its regression documents. Before/after pre-volatility-control pairs share the same sample.')
     code("analysis=runpy.run_path(str(ROOT/'scripts/06_run_analysis.py'),run_name='analysis_module')\nsummary=analysis['main']()")
@@ -71,23 +72,27 @@ pd.set_option('display.float_format',lambda x:f'{x:.4f}')
        'separately for each weighting scheme.')
     code("t4=pd.read_csv(RESULTS/'table4.csv')\ndisplay(t4[['form','measure','aggregate_beta','aggregate_ols_t','aggregate_hac_t','within_beta','within_se','within_p','within_holm_p','within_n','firms']])")
     md('## Table 5 — Uncertainty and next-quarter volatility\nThe outcome is log annualized volatility on trading days '
-       '[4,66]. Pre-volatility uses [-63,-1]. Models include log size, log turnover, prior return, form, industry '
-       'and calendar-quarter effects. The paired models add only log pre-volatility. The score is standardized '
+       '[4,66]. Pre-volatility uses [-63,-1]. Four models contain tone plus intercept, then add size only, '
+       'prior volatility only, or both. No other controls or fixed effects enter these primary models. '
+       'Size is log market value, included because company scale may relate to both tone and market behavior. '
+       'It is a methodological choice, not explicitly required by the assignment. The score is standardized '
        'within the same complete-case corpus, so the coefficient change is not a change in sample composition.')
-    code("t5=pd.read_csv(RESULTS/'table5.csv')\ndisplay(t5[['measure','pre_vol_control','beta','se','t','p','holm_p','ci_low','ci_high','n','firms','corpus']])\nassert t5.groupby('measure').corpus.nunique().eq(1).all()")
+    code("t5=pd.read_csv(RESULTS/'table5.csv')\ndisplay(t5[['measure','control_set','formula','beta','se','t','p','holm_p','ci_low','ci_high','n','firms','corpus']])\nassert t5.groupby('measure').corpus.nunique().eq(1).all()\nc=pd.read_csv(RESULTS/'all_regression_coefficients.csv')\ndisplay(c.loc[c.model.isin(t5.model)])")
     md('## Table 6 — Sentiment and filing-period excess returns\nThe outcome is stock minus SPY buy-and-hold return '
-       'over [0,3], in percentage points. Controls include prior volatility and those used above. The minimum '
+       'over [0,3], in percentage points. The same four control specifications are compared on one common '
+       'sample, so even the no-control model uses filings with an available pre-volatility baseline. The minimum '
        'detectable effect is an approximate 80%-power precision diagnostic, not observed power.')
-    code("t6=pd.read_csv(RESULTS/'table6.csv')\ndisplay(t6[['measure','beta','se','t','p','holm_p','ci_low','ci_high','mde80','n','firms']])\nc=pd.read_csv(RESULTS/'all_regression_coefficients.csv')\ndisplay(c.loc[c.model.isin(t6.model)&c.term.isin(['tone_z','log_market_value','log_turnover','pre_return','log_pre_vol'])])")
-    md('## All declared outcome sensitivities\nForm-specific samples re-estimate IDF. Other checks replace industry '
-       'effects with issuer effects, use two-way clustering, change the return benchmark to ARKK, or remove retired '
+    code("t6=pd.read_csv(RESULTS/'table6.csv')\ndisplay(t6[['measure','control_set','formula','beta','se','t','p','holm_p','ci_low','ci_high','mde80','n','firms']])\ndisplay(c.loc[c.model.isin(t6.model)])\nassert t6.groupby('measure').corpus.nunique().eq(1).all()")
+    md('## Outcome sensitivities\nAll sensitivities use both size and prior volatility. Form-specific samples '
+       're-estimate IDF. Other checks add issuer, calendar-quarter and form effects, use two-way clustering, '
+       'change the return benchmark to ARKK, or remove retired '
        'Negative terms. Negative nuisance variances in the two-way covariance are disclosed; they are not clipped. '
        'There are only 20 time clusters, so those sensitivities also need caution.')
-    code("models=pd.read_csv(RESULTS/'all_outcome_models.csv')\ndisplay(models[['outcome','variant','measure','pre_vol_control','beta','se','p','n','corpus','negative_variance_terms']])")
+    code("models=pd.read_csv(RESULTS/'all_outcome_models.csv')\ndisplay(models[['outcome','variant','measure','control_set','formula','beta','se','p','n','corpus','negative_variance_terms']])")
     md('## Interpretation and limitations\nAnnual-report negative language rises within issuers under both weighting '
        'schemes; uncertainty trends differ by form and weight. The pre-volatility control attenuates the uncertainty '
-       'coefficient, so much of the association reflects existing volatility. Controlled associations are modest and '
-       'less compelling after family adjustment. Replacing industry effects with issuer effects makes both '
+       'coefficient, so much of the association reflects existing volatility. With both controls, pooled '
+       'associations remain significant after family adjustment. Adding issuer, calendar-quarter and form effects makes both '
        'uncertainty coefficients negative and insignificant, so a robust within-issuer predictive relationship '
        'is not established. The four-day return test is imprecise. These are different tests '
        'with different evidence; a blanket claim that the sample is too small is not warranted.\n\n'

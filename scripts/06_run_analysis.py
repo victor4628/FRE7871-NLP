@@ -77,9 +77,10 @@ def main():
                 ("At least 2,000 narrative words",lambda d:d.analysis_words.ge(2000)),
                 ("Exclude explicitly identified shell companies",lambda d:~d.shell_company.eq(True))]
     core,text_flow=waterfall(features,text_steps,"text")
-    market_steps=[("Complete 63-day pre-filing returns",lambda d:d.log_pre_vol.notna() & d.pre_return.notna()),
-                  ("Dated instantaneous common shares and positive market value",lambda d:d.log_market_value.notna()),
-                  ("Complete positive pre-filing turnover",lambda d:d.log_turnover.notna())]
+    # A common sample makes the four user-requested control specifications
+    # comparable. Prior return and turnover are no longer required controls.
+    market_steps=[("Complete 63-day pre-filing returns and positive volatility",lambda d:d.log_pre_vol.notna()),
+                  ("Dated instantaneous common shares and positive market value",lambda d:d.log_market_value.notna())]
     vol_sample,vol_flow=waterfall(core,market_steps+[("Complete 63-day post-filing returns",lambda d:d.log_post_vol.notna())],"volatility")
     ret_sample,ret_flow=waterfall(core,market_steps+[("Complete four-day stock and benchmark returns",lambda d:d.excess_return.notna() & d.excess_return_arkk.notna())],"return")
     flows=pd.DataFrame(text_flow+vol_flow+ret_flow)

@@ -10,8 +10,10 @@ Figure 1, all regression sensitivities and saved test output, and the six-page
 
 The 2021-2025 text sample contains 1,624 reports; volatility and return models
 use 1,591 and 1,592 respectively. Low-priced stocks are retained. Annual-report negative language increases
-within issuers. The pooled uncertainty association weakens with prior volatility
-and disappears with issuer effects; four-day return estimates are imprecise.
+within issuers. Tables 5-6 compare no controls, size only, prior volatility only,
+and both, on a common sample. The pooled uncertainty association weakens with
+prior volatility and disappears with added issuer/time effects; four-day return
+estimates are imprecise. Prior return and turnover are no longer calculated.
 
 For reproduction, follow [RUNNING_zh.md](RUNNING_zh.md). Run acquisition scripts
 00-03, audit 04, price/actions download 05, then `scripts/07_build_notebook.py`

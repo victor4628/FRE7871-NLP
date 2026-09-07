@@ -126,20 +126,31 @@ def outcome_models(sample, counts, vocabulary, outcome, variant="pooled", firm_e
     category = "uncertainty" if outcome == "volatility" else "negative"
     outcome_name = "log_post_vol" if outcome == "volatility" else (
         "excess_return" if benchmark == "SPY" else "excess_return_arkk")
-    fe = "C(cik)" if firm_effects else "C(industry)"
-    form_fe = " + C(form)" if scored.form.nunique() > 1 else ""
-    controls = "log_market_value + log_turnover + pre_return + C(quarter) + " + fe + form_fe
+    settings = [("none", False, False), ("size", True, False),
+                ("volatility", False, True), ("both", True, True)]
+    if variant != "pooled":
+        settings = settings[-1:]
     rows, coefficients = [], []
     for weight in ["prop", "tfidf"]:
         tone = category+"_"+weight
         data = scored.copy()
         data["tone_z"] = standardize(data[tone])
-        for with_pre in ([False,True] if outcome == "volatility" else [True]):
-            formula = outcome_name + " ~ tone_z + " + controls + (" + log_pre_vol" if with_pre else "")
+        for control_set, with_size, with_pre in settings:
+            formula = outcome_name + " ~ tone_z"
+            if with_size:
+                formula += " + log_market_value"
+            if with_pre:
+                formula += " + log_pre_vol"
+            if firm_effects:
+                formula += " + C(cik) + C(quarter)"
+                if data.form.nunique() > 1:
+                    formula += " + C(form)"
             result = clustered_fit(formula, data, two_way=two_way)
-            model_id = f"{outcome}_{variant}_{tone}_pre{int(with_pre)}"
+            model_id = f"{outcome}_{variant}_{tone}_{control_set}"
             row = {"model": model_id, "outcome": outcome, "variant": variant, "measure": tone,
+                   "control_set": control_set, "size_control": with_size,
                    "pre_vol_control": with_pre, "firm_effects": firm_effects,
+                   "formula": formula,
                    "two_way_cluster": two_way, "benchmark": benchmark,
                    **result_row(result, "tone_z"), "firms": data.cik.nunique(),
                    "quarters": data.quarter.nunique(), "corpus": corpus_id(data),
@@ -165,6 +176,6 @@ def all_outcome_models(vol_sample, return_sample, counts, vocabulary):
             r,c = outcome_models(data,counts,vocabulary,outcome,variant,**options)
             rows.append(r); coefs.append(c)
     result = pd.concat(rows,ignore_index=True)
-    primary = result.variant.eq("pooled") & result.pre_vol_control
+    primary = result.variant.eq("pooled") & result.control_set.eq("both")
     result.loc[primary,"holm_p"] = multipletests(result.loc[primary,"p"],method="holm")[1]
     return result, pd.concat(coefs,ignore_index=True)

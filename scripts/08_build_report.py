@@ -60,6 +60,28 @@ def page_number(canvas,doc):
     canvas.drawRightString(A4[0]-43,25,str(doc.page))
 
 
+def control_panels(models, coefficients):
+    panels=[]
+    for weight, label in [('prop','Proportion'),('tfidf','TF-IDF')]:
+        d=models.loc[models.measure.str.endswith(weight)].set_index('control_set').loc[
+            ['none','size','volatility','both']]
+        rows=[]
+        for term, title in [('tone_z','Tone (1 SD)'),('log_market_value','Log market value'),
+                            ('log_pre_vol','Log prior volatility')]:
+            values=[]
+            for _, model in d.iterrows():
+                found=coefficients.loc[coefficients.model.eq(model.model)&coefficients.term.eq(term)]
+                values.append('-' if found.empty else f'{found.iloc[0].beta:.4f}<br/>({found.iloc[0].se:.4f})')
+            rows.append([title]+values)
+        rows += [['N']+[f(r.n,0) for _,r in d.iterrows()],
+                 ['Tone p']+[pv(r.p) for _,r in d.iterrows()],
+                 ['Tone Holm p']+[pv(r.holm_p) for _,r in d.iterrows()]]
+        panels += [P(label,'SmallNote'),
+                   tab(['Regressor / statistic','None','Size only','Volatility only','Both'],rows,[137,93,93,93,93]),
+                   Spacer(1,7)]
+    return panels
+
+
 def build(author,netid):
     DEST.mkdir(parents=True,exist_ok=True)
     s=json.loads((RESULTS/'summary.json').read_text())
@@ -74,7 +96,7 @@ def build(author,netid):
     features=pd.read_csv(ROOT/'data/interim/analysis/filing_features.csv',dtype={'cik':str})
     core=pd.read_csv(ROOT/'data/interim/analysis/scored_text_corpus.csv',dtype={'cik':str})
     family=table4.loc[table4.measure.eq('negative_prop') & table4.form.eq('10-K')].iloc[0]
-    controlled=table5.loc[table5.pre_vol_control]
+    controlled=table5.loc[table5.control_set.eq('both')]
     w=509
     story=[]
     story += [P('Uncertainty and Sentiment<br/>in ARK Company Filings','ReportTitle'),
@@ -139,11 +161,14 @@ def build(author,netid):
                 f'{s["shifted_event_days"]:,} core filings move from their filing date. Four-day return is stock buy-and-hold return '
                 'over [0,3] minus SPY buy-and-hold return. Volatility is daily-return SD times sqrt(252): [-63,-1] before and [4,66] '
                 'after, excluding the four-day reaction. All 63 returns are required; missing prices are never filled.'),
-              P('Size uses dated common shares from the same filing and day -1 nominal price; subsequent split adjustments are reversed. '
-                'Turnover uses split-consistent pre-filing volume and the filing share count. Multiple common classes are summed and valued '
-                'at the selected class price, an approximation. Weighted-average EPS shares are excluded from the main analysis. '
-                'Models control for log size, log turnover, prior return, form, two-digit SIC and calendar-quarter effects; controlled models '
-                'also include log prior volatility. Standard errors cluster by issuer.','SmallNote')]
+              P('Size is log market value: dated common shares from the same filing times day -1 nominal price, with split units aligned. '
+                'It is an optional research control, included because company scale may affect both disclosure language and market behavior. '
+                'Multiple common classes are summed and valued '
+                'at the selected class price, an approximation. Weighted-average EPS shares are excluded. '
+                'Tables 5-6 compare no controls, size only, prior volatility only and both on a common sample. '
+                'The primary models contain no other controls or fixed effects. Prior return and turnover are not calculated. '
+                'The 63 preceding returns provide prior volatility; size needs one preceding closing price and a share count. '
+                'Standard errors cluster by issuer.','SmallNote')]
     story.append(PageBreak())
     story += [P('Table 3  Words driving each measure','Section'),
               P('Shares below divide each word count by all occurrences of words on its own list, not by all words in the filings. '
@@ -179,77 +204,51 @@ def build(author,netid):
                 'therefore cannot be ignored. With only 20 aggregate quarters, even corrected aggregate inference is fragile.','SmallNote')]
     story.append(PageBreak())
     story += [P('Table 5  Uncertainty and subsequent volatility','Section'),
-              P('The dependent variable is log annualized post-filing volatility. Each coefficient is for a one-SD increase in the '
-                'uncertainty score. Paired models share the same complete-case sample and IDF corpus; only the pre-volatility control changes.')]
-    rows=[]
-    for _,r in table5.iterrows():
-        rows.append(['Proportion' if r.measure.endswith('prop') else 'TF-IDF','Yes' if r.pre_vol_control else 'No',
-                     f(r.beta,4),f(r.se,4),pv(r.p),pv(r.get('holm_p')),f(r.n,0)])
-    story.append(tab(['Weight','Prior vol.','Coefficient','Cluster SE','p','Holm p','N'],rows,[90,60,88,78,65,65,63]))
+              P('The outcome is log annualized volatility on days [4,66]. Each panel compares exactly the same filings and '
+                'standardized tone under four control choices. None means tone plus intercept only; size is log market value '
+                'and volatility is log prior volatility. Parentheses contain issuer-clustered SEs.')]
+    story += control_panels(table5, coefficients)
     passages=[]
     for weight in ['prop','tfidf']:
-        a=table5.loc[table5.measure.eq('uncertainty_'+weight)&~table5.pre_vol_control].iloc[0]
-        b=table5.loc[table5.measure.eq('uncertainty_'+weight)&table5.pre_vol_control].iloc[0]
-        reduction=100*(1-b.beta/a.beta)
-        passages.append(f'{"Proportional" if weight=="prop" else "TF-IDF"} uncertainty falls from {a.beta:.4f} to {b.beta:.4f} '
-                        f'after controlling for prior volatility, a {reduction:.1f}% attenuation. The controlled estimate corresponds '
-                        f'to about {100*(math.exp(b.beta)-1):.1f}% higher volatility per SD.')
-    story += [Spacer(1,9),P(' '.join(passages)),
-              P('The attenuation is the central result: hedged language partly describes companies that were already volatile. '
-                'The controlled coefficients are conditional associations, not evidence that the words cause volatility. '
-                'They are modest and their family-adjusted p values are less compelling than the unadjusted tests. '
-                'Holm adjustment here covers the two controlled volatility and two return tests together.'),
-              P('Declared robustness checks','Section')]
-    vr=all_models.loc[all_models.outcome.eq('volatility') & all_models.pre_vol_control & ~all_models.variant.eq('pooled')]
+        d=table5.loc[table5.measure.eq('uncertainty_'+weight)].set_index('control_set')
+        passages.append(f'{"Proportion" if weight=="prop" else "TF-IDF"}: adding prior volatility changes the tone coefficient '
+                        f'from {d.loc["none","beta"]:.4f} to {d.loc["volatility","beta"]:.4f} without size, '
+                        f'and from {d.loc["size","beta"]:.4f} to {d.loc["both","beta"]:.4f} holding size constant.')
+    story += [P(' '.join(passages)),
+              P('Prior volatility accounts for much of the pooled association. With both controls, the remaining association '
+                'is significant after Holm adjustment across the four both-control outcome tests. This is a conditional '
+                'association, not evidence that words cause volatility. The other columns show sensitivity to the controls; '
+                'their p values are unadjusted.','SmallNote'),
+              P('Sensitivity of the model with both controls','Section')]
+    vr=all_models.loc[all_models.outcome.eq('volatility') & all_models.control_set.eq('both') & ~all_models.variant.eq('pooled')]
     rows=[]
     for variant in ['10-K','10-Q','firm_FE','two_way']:
         d=vr.loc[vr.variant.eq(variant)]
-        vals=[]
+        values=[]
         for weight in ['prop','tfidf']:
             r=d.loc[d.measure.str.endswith(weight)].iloc[0]
-            vals.extend([f(r.beta,4),pv(r.p)])
-        rows.append([variant.replace('_',' ')]+vals)
-    story.append(tab(['Specification','Prop. coefficient','p','TF-IDF coefficient','p'],rows,[125,115,65,129,75]))
-    story += [Spacer(1,8),P('The form-specific rows re-estimate IDF within that form. Firm effects replace industry effects. '
-                          'Two-way clustering uses issuer and calendar quarter; there are only 20 quarter clusters. '
-                          'The two-way covariance can have negative nuisance-parameter variances in this finite sample; '
-                          'these are logged, not set to zero, and target coefficients with invalid variances are reported as NA. '
-                          'The complete coefficient tables preserve all estimated specifications.','SmallNote'),
-              P('Replacing industry effects with issuer effects makes both uncertainty coefficients negative and insignificant. '
-                'The positive pooled association therefore depends on between-issuer differences; robust incremental prediction '
-                'within issuers is not established. Trend, volatility and return tests answer different questions. '
-                'Sample selection and overlapping outcome windows further limit interpretation.')]
+            values.append(f'{r.beta:.4f} / '+pv(r.p))
+        rows.append([variant.replace('_',' ')]+values)
+    story += [tab(['Specification','Proportion: coefficient / p','TF-IDF: coefficient / p'],rows,[159,175,175]),
+              P('Form-specific samples re-estimate IDF. The firm FE sensitivity adds issuer, calendar-quarter and form effects; '
+                'both uncertainty coefficients then become negative and insignificant. A robust within-issuer predictive '
+                'relationship is therefore not established. Two-way clustering has only 20 time clusters; invalid nuisance '
+                'variances are logged in the notebook.','SmallNote')]
     story.append(PageBreak())
     story += [P('Table 6  Sentiment and four-day excess returns','Section'),
-              P('Before interpreting significance, consider precision. Approximate 80%-power minimum detectable effects are '
-                f'{table6.iloc[0].mde80:.2f} and {table6.iloc[1].mde80:.2f} percentage points per SD for proportional and TF-IDF sentiment, '
-                'using (cluster-t critical + 0.842) times the clustered SE. This is a design-precision diagnostic, not observed power.')]
-    terms=[('tone_z','Negative tone (1 SD)'),('log_market_value','Log market value'),('log_turnover','Log turnover'),
-           ('pre_return','Prior 63-day return'),('log_pre_vol','Log prior volatility')]
-    rows=[]
-    for term,label_ in terms:
-        values=[]
-        for _,model in table6.iterrows():
-            r=coefficients.loc[coefficients.model.eq(model.model)&coefficients.term.eq(term)].iloc[0]
-            values.append(f'{r.beta:.3f}<br/>({r.se:.3f})')
-        rows.append([label_]+values)
-    for label_,column,format_ in [('N','n',0),('Issuer clusters','firms',0),('Adjusted R squared','adj_r2',3),('Tone p','p',3),('Tone Holm p','holm_p',3)]:
-        rows.append([label_]+[f(r[column],format_) for _,r in table6.iterrows()])
-    story.append(tab(['Regressor / statistic','Proportion','TF-IDF'],rows,[245,132,132]))
-    story += [P('Dependent variable: stock minus SPY buy-and-hold return, in percentage points. Parentheses contain issuer-clustered SEs. '
-                'Form, two-digit SIC and calendar-quarter effects are included but not printed. Both tone coefficients are negative '
-                'and statistically imprecise. A null here is compatible with economically nontrivial effects and does not invalidate '
-                'the separate trend or volatility tests.','SmallNote')]
-    rr=all_models.loc[all_models.outcome.eq('return') & ~all_models.variant.eq('pooled')]
-    rows=[]
-    for variant in ['10-K','10-Q','firm_FE','two_way','ARKK','active_negative']:
-        d=rr.loc[rr.variant.eq(variant)]
-        vals=[]
-        for weight in ['prop','tfidf']:
-            r=d.loc[d.measure.str.endswith(weight)].iloc[0]
-            vals.append(f'{r.beta:.3f} / '+pv(r.p))
-        rows.append([variant.replace('_',' ')] + vals)
-    story += [P('Return sensitivities (coefficient / p)','SmallNote'),tab(['Specification','Proportion','TF-IDF'],rows,[245,132,132]),Spacer(1,7)]
+              P('The outcome is stock minus SPY buy-and-hold return over [0,3], in percentage points. The same four models '
+                'are estimated on a common sample within each weight. Parentheses contain issuer-clustered SEs; a dash '
+                'means the regressor is omitted, not estimated to be zero.')]
+    story += control_panels(table6, coefficients)
+    both=table6.loc[table6.control_set.eq('both')].set_index('measure')
+    story += [P('All four specifications produce negative but statistically imprecise tone coefficients. With both controls, '
+                f'the estimates are {both.loc["negative_prop","beta"]:.3f} and {both.loc["negative_tfidf","beta"]:.3f} percentage '
+                'points per SD. Failure to reject zero does not establish the absence of an economically meaningful effect.'),
+              P('Approximate 80%-power minimum detectable effects for the models with both controls are '
+                f'{both.loc["negative_prop","mde80"]:.2f} and {both.loc["negative_tfidf","mde80"]:.2f} percentage points per SD, '
+                'using (cluster-t critical + 0.842) times the clustered SE. This is a precision diagnostic, not observed power. '
+                'Form-specific, added fixed-effect, two-way-cluster, ARKK-benchmark and active-word-list results are saved '
+                'in the notebook. Holm adjustment covers only the four pooled both-control outcome tests.','SmallNote')]
     full_years=core.groupby('cik').filing_date.apply(lambda x:pd.to_datetime(x).dt.year.nunique())
     story += [P('Limits and next step','Section'),
               P(f'The 124-security universe is selected from 2026 holdings snapshots, not historical ARK ownership. '

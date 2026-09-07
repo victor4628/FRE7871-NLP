@@ -2,7 +2,9 @@
 
 The initial specification was set before inspecting regression estimates. At the
 student's subsequent request, the $3 minimum-price screen was removed and all
-results were recomputed. This amendment was not selected for significance.
+results were recomputed. The student then requested four outcome specifications:
+no controls, size only, prior volatility only, and both. These amendments were
+not selected for significance.
 This is a retrospective filing event study, not an out-of-sample trading backtest.
 
 ## Sample and text
@@ -47,8 +49,11 @@ Volatility is the sample SD of daily stock returns times sqrt(252): pre-filing
 [-63,-1], post-filing [4,66] (63 trading sessions after the filing return window).
 Require all daily returns in the relevant window. Returns are never forward-filled.
 
-Controls are pre-filing buy-and-hold return, log pre-filing annual volatility,
-log issuer market-value proxy and log turnover. Recover common shares from the
+The two outcome controls are log pre-filing annual volatility and log issuer
+market-value proxy. Size accounts for company scale, which may relate to both
+language and market outcomes; it is a research choice rather than an explicitly
+required variable. Prior return and turnover are not calculated or included.
+Recover common shares from the
 same filing's cover-page XBRL, summing common classes only when no consolidated
 total exists. Otherwise accept a dated, same-accession, instantaneous common-share
 fact. Do not use weighted-average EPS shares for the primary analysis. Do not
@@ -56,10 +61,9 @@ fill from future reports. Market value uses the selected security's nominal pric
 at day -1 times contemporaneous issuer common shares; using one class's price is
 a disclosed approximation for multi-class issuers. Undo Yahoo's subsequent split
 adjustments with its split history; adjust shares for splits between their as-of
-date and the pricing date. Turnover averages daily volume / contemporaneous shares
-over [-63,-1], with split units aligned. Retain low-priced stocks: there is no
-minimum-price cutoff. Positive, observed size/turnover remain necessary to take
-their logarithms. No winsorization is applied in the main models.
+date and the pricing date. Retain low-priced stocks: there is no minimum-price
+cutoff. Positive observed size and volatility are needed for logarithms.
+No winsorization is applied in the main models.
 
 ## Exhibits and inference
 
@@ -76,22 +80,30 @@ company-quarter panel with company and quarter-of-year effects, firm-clustered
 standard errors and cluster-count t degrees of freedom. Report both and do not
 interpret the aggregate trend as causal.
 
-Table 5 regresses log post-filing volatility on standardized Uncertainty, size,
-turnover, pre-return, form, two-digit SIC and calendar-quarter effects. Run paired
-models without and with log pre-volatility on identical complete-case samples.
-Table 6 regresses four-day excess return on standardized Negative with the same
-controls plus log pre-volatility. These are within-sample conditional associations.
+Table 5 regresses log post-filing volatility on standardized Uncertainty.
+Table 6 regresses four-day excess return on standardized Negative. For each
+weighting scheme and outcome, show four models: tone plus intercept only; add
+log size; add log prior volatility instead; add both. The primary four models
+contain no other regressors or fixed effects. Clustered standard errors affect
+inference, not which explanatory variables enter the regression.
+
+Use an identical complete-case sample, score standardization and IDF corpus for
+all four models within each outcome, even when a model omits an available control.
+Thus the baseline model also requires 63 preceding returns for comparability,
+although its equation does not need them. Preceding returns calculate prior
+volatility; four-day event returns and the 63-day post-event volatility window
+are separate outcomes. These are within-sample conditional associations.
 Firm-clustered errors are primary. Report coefficient, SE, t, p, CI, observations
 and cluster counts. For return-test power, report the approximate 80%-power
 minimum detectable effect (t critical + 0.842) * clustered SE per one-SD tone.
 This is a design precision diagnostic, not observed/post-hoc power.
 
-Declared sensitivities: 10-K/10-Q-specific volatility/return models; firm effects
-instead of industry effects; two-way firm/calendar-quarter clustering (20 time
+Sensitivities use the model with both controls: 10-K/10-Q-specific models;
+add issuer, calendar-quarter and form effects; two-way firm/calendar-quarter clustering (20 time
 clusters is a limitation); ARKK excess-return benchmark; active-only Negative
 list. All estimated specifications are retained in output tables. Holm-adjust
 the four primary within-firm trend p values (two categories x two forms) within
-each weighting scheme, and the four controlled pooled outcome p values as a
+each weighting scheme, and the four pooled outcome p values with both controls as a
 separate family. Do not select a model based on significance.
 
 ## Data attrition
