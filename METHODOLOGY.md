@@ -1,7 +1,9 @@
 # Analysis specification
 
-This specification is fixed before inspecting regression estimates. This is a
-retrospective filing event study, not an out-of-sample trading backtest.
+The initial specification was set before inspecting regression estimates. At the
+student's subsequent request, the $3 minimum-price screen was removed and all
+results were recomputed. This amendment was not selected for significance.
+This is a retrospective filing event study, not an out-of-sample trading backtest.
 
 ## Sample and text
 
@@ -55,8 +57,9 @@ at day -1 times contemporaneous issuer common shares; using one class's price is
 a disclosed approximation for multi-class issuers. Undo Yahoo's subsequent split
 adjustments with its split history; adjust shares for splits between their as-of
 date and the pricing date. Turnover averages daily volume / contemporaneous shares
-over [-63,-1], with split units aligned. Require day -1 nominal price >= $3 and
-positive size/turnover. No winsorization is applied in the main models.
+over [-63,-1], with split units aligned. Retain low-priced stocks: there is no
+minimum-price cutoff. Positive, observed size/turnover remain necessary to take
+their logarithms. No winsorization is applied in the main models.
 
 ## Exhibits and inference
 

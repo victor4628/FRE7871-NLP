@@ -39,7 +39,9 @@ pd.set_option('display.float_format',lambda x:f'{x:.4f}')
        'early closes, missing returns, compounding, split units, inline text, shell checkboxes, common-share classes, '
        'and redundant fixed effects.')
     code("r=subprocess.run([sys.executable,'-m','pytest','tests','-q'],cwd=ROOT,capture_output=True,text=True)\nprint(r.stdout)\nassert r.returncode==0,r.stderr")
-    md('## Run the complete analysis\nThe specification is defined independently of significance. '
+    md('## Run the complete analysis\nThe initial specification was defined independently of significance. '
+       'The student subsequently requested removal of the optional $3 price cutoff; all results below '
+       'use that amended sample, retaining low-priced stocks. '
        'Returns and volatility have separate sample waterfalls. Within each specification IDF is estimated on '
        'exactly its regression documents. Before/after pre-volatility-control pairs share the same sample.')
     code("analysis=runpy.run_path(str(ROOT/'scripts/06_run_analysis.py'),run_name='analysis_module')\nsummary=analysis['main']()")

@@ -18,7 +18,7 @@ from .parse import tokenize, _numeric_share
 
 ANALYSIS = INTERIM_DIR / "analysis"
 PARSER_VERSION = "visible-ix-v2"
-COVER_VERSION = 2
+COVER_VERSION = 3
 SHARE_TAG = "dei:entitycommonstocksharesoutstanding"
 
 
@@ -99,6 +99,9 @@ def plain_cover_shares(text, filing_date):
         matches = re.findall(
             r"(?i)(\d{1,3}(?:,\d{3})+|\d{6,})\s+(?:shares\s+)?of\s+([^.;]{0,130}?common\s+stock)", normalized
         )
+        matches += re.findall(
+            r"(?i)(\d{1,3}(?:,\d{3})+|\d{6,})\s+((?:Class\s+[A-Z0-9-]+\s+)?ordinary\s+shares)", normalized
+        )
         if matches:
             counts = [int(n.replace(",", "")) for n, _ in matches]
             if all(n > 0 for n in counts):
@@ -118,9 +121,11 @@ def shell_status(root, text):
                 return True
             if fmt.endswith(("fixed-false", "booleanfalse")):
                 return False
-    match = re.search(r"(?is)is a shell company.{0,250}?Yes\s*([☒☑⌧☐◻])\s*No\s*([☒☑⌧☐◻])", text[:18000])
+    match = re.search(r"(?is)is a shell company.{0,250}?Yes\s*([☒☑⌧☐◻x¨])\s*No\s*([☒☑⌧☐◻x¨])", text[:18000])
     if match:
-        return match.group(1) in "☒☑⌧"
+        yes, no = (v.lower() in "☒☑⌧x" for v in match.groups())
+        if yes != no:
+            return yes
     return None
 
 
@@ -155,15 +160,18 @@ def build_text_data(force=False):
         if saved["parser_version"] == PARSER_VERSION:
             if saved.get("cover_version") != COVER_VERSION:
                 cached, matrix, words = load_text_data()
-                for i,row in cached.loc[cached.cover_shares_source.isin(["cover_sentence","unresolved"])].iterrows():
+                review = cached.cover_shares_source.isin(["cover_sentence","unresolved"]) | cached.shell_company.isna()
+                for i,row in cached.loc[review].iterrows():
                     root = html.fromstring((FILING_DIR/(row.accession.replace("-","")+".html")).read_bytes(),
                                            parser=html.HTMLParser(encoding="utf-8"))
-                    value, date, source, sentence = plain_cover_shares(_text(root),pd.Timestamp(row.filing_date))
-                    if np.isfinite(value):
+                    cover_text = _text(root)
+                    value, date, source, sentence = plain_cover_shares(cover_text,pd.Timestamp(row.filing_date))
+                    if np.isfinite(value) and row.cover_shares_source in ["cover_sentence","unresolved"]:
                         cached.at[i,"cover_shares"] = value
                         cached.at[i,"cover_shares_date"] = date.date().isoformat()
                         cached.at[i,"cover_shares_source"] = source
                         cached.at[i,"cover_sentence"] = sentence
+                    cached.at[i,"shell_company"] = shell_status(root, cover_text)
                 cached.to_csv(ANALYSIS/"text_metadata.csv",index=False)
                 saved["cover_version"] = COVER_VERSION
                 manifest.write_text(json.dumps(saved,indent=2))

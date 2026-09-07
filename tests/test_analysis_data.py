@@ -55,6 +55,19 @@ def test_shell_boolean_ballot_box():
         assert shell_status(root, "") is expected
 
 
+def test_legacy_shell_marks_and_ordinary_share_counts():
+    root = html.fromstring('<html><body></body></html>')
+    assert shell_status(root, 'is a shell company: Yes x No ¨') is True
+    assert shell_status(root, 'is a shell company: Yes ¨ No X') is False
+    assert shell_status(root, 'is a shell company: Yes x No x') is None
+    text = ('As of May 21, 2021, there were 80,500,000 Class A ordinary shares, '
+            '$0.0001 par value per share, and 20,125,000 Class B ordinary shares, '
+            '$0.0001 par value per share, issued and outstanding.')
+    shares, date, source, _ = plain_cover_shares(text, pd.Timestamp('2021-05-24'))
+    assert shares == 100625000 and date == pd.Timestamp('2021-05-21')
+    assert source == 'cover_sentence'
+
+
 def test_dated_plain_share_statement_does_not_count_par_value():
     text = ('As of March 5, 2021, there were 50,000,000 shares of the Class A common stock, '
             'par value $0.0001 per share, and 12,500,000 shares of the Class B common stock '

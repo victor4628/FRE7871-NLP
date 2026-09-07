@@ -78,7 +78,6 @@ def main():
                 ("Exclude explicitly identified shell companies",lambda d:~d.shell_company.eq(True))]
     core,text_flow=waterfall(features,text_steps,"text")
     market_steps=[("Complete 63-day pre-filing returns",lambda d:d.log_pre_vol.notna() & d.pre_return.notna()),
-                  ("Observed day -1 nominal price at least $3",lambda d:d.prior_price.ge(3)),
                   ("Dated instantaneous common shares and positive market value",lambda d:d.log_market_value.notna()),
                   ("Complete positive pre-filing turnover",lambda d:d.log_turnover.notna())]
     vol_sample,vol_flow=waterfall(core,market_steps+[("Complete 63-day post-filing returns",lambda d:d.log_post_vol.notna())],"volatility")

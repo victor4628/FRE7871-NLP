@@ -19,6 +19,12 @@ claim that the student independently wrote that code or independently verified
 every numerical result. Subsequent independent revisions should be described
 accurately rather than attributed retroactively.
 
+The student subsequently rejected the optional $3 minimum-price screen. Codex
+removed it and recomputed the samples, regressions, notebook and report. This
+was a user-directed sample amendment after the initial results, not a rule fixed
+before seeing those results. The supplementary quintile chart was also requested
+after the initial analysis.
+
 **Errors and issues corrected during AI-assisted work:** The initial plan used
 the superseded S&P 500 / 2018-2022 assignment and was replaced by the current ARK
 / 2021-2025 brief. Security records were initially confused with distinct issuers
@@ -31,7 +37,13 @@ the word "shares" and text with a split word "common". The analysis also handles
 retired negative-dictionary entries, Yahoo split-adjustment units, early exchange
 closes, and redundant fixed-effect columns explicitly.
 
-**Verification performed by Codex:** The acquisition audit, nine numerical and
+A later review found that the parser missed dated "ordinary shares" on a
+predecessor filing's cover and legacy shell checkboxes using x and an empty-box
+font character. Both were corrected and cached cover metadata was refreshed.
+Codex also corrected an explanatory counting error: BMNR accounts for 16 missing
+pre-history filings, not the 17 previously stated in conversation.
+
+**Verification performed by Codex:** The acquisition audit, ten numerical and
 timing tests, and the complete notebook were run locally. All six report pages
 were rendered and visually inspected. Report values are read from computed
 tables. All estimated sensitivities are retained, including insignificant

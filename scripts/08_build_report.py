@@ -106,7 +106,9 @@ def build(author,netid):
     story += [Spacer(1,6),P('The initial 31 losses are 7 unresolved SEC ticker mappings and 24 mapped securities without an eligible '
                            '10-K/10-Q in the window. Filing counts for those excluded securities are not observed and are not invented. '
                            'The 93 eligible securities represent 92 issuers because GOOG and GOOGL share filings. '
-                           'Unknown shell status is retained and flagged; explicitly reported shells are excluded. All download and parsing failures were zero.','SmallNote')]
+                           'Explicitly reported shells are excluded. The optional $3 price cutoff was removed at the student\'s request; '
+                           'low-priced stocks remain eligible. Legacy shell checkboxes and ordinary-share cover wording were corrected. '
+                           'All download and parsing failures were zero.','SmallNote')]
     story.append(PageBreak())
     story += [P('Measures and identification','Section'),
               P('The instructor-specified LM lists contain 2,355 negative words and 297 uncertainty words. '
