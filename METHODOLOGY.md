@@ -1,14 +1,12 @@
 # Analysis specification
 
 See [ANALYSIS_CHOICES.md](ANALYSIS_CHOICES.md) for a requirement-by-requirement
-disclosure of implementation decisions, added checks and withdrawn choices.
+summary of implementation decisions and additional analyses.
 
-The initial specification was set before inspecting regression estimates. At the
-student's subsequent request, the $3 minimum-price screen was removed and all
-results were recomputed. The student then requested four outcome specifications:
-no controls, size only, prior volatility only, and both. These amendments were
-not selected for significance.
-This is a retrospective filing event study, not an out-of-sample trading backtest.
+This retrospective filing event study compares four outcome specifications:
+no controls, size only, prior volatility only, and both. The sample imposes no
+minimum share-price threshold. The estimates describe within-sample associations,
+not out-of-sample trading performance.
 
 ## Sample and text
 

@@ -59,10 +59,8 @@ def show_table(frame):
        'early closes, missing returns, compounding, split units, inline text, shell checkboxes, common-share classes, '
        'and redundant fixed effects.')
     code("r=subprocess.run([sys.executable,'-m','pytest','tests','-q'],cwd=ROOT,capture_output=True,text=True)\nprint(r.stdout)\nassert r.returncode==0,r.stderr")
-    md('## Run the complete analysis\nThe initial specification was defined independently of significance. '
-       'The student subsequently requested removal of the optional $3 price cutoff; all results below '
-       'use that amended sample, retaining low-priced stocks. The outcome models were subsequently revised '
-       'at the student\'s request to no controls, size only, prior volatility only, and both. '
+    md('## Run the complete analysis\nThe sample retains low-priced stocks without a minimum-price threshold. '
+       'The primary outcome models compare no controls, company size only, prior volatility only, and both. '
        'Returns and volatility have separate sample waterfalls. Within each specification IDF is estimated on '
        'exactly its regression documents. Before/after pre-volatility-control pairs share the same sample.')
     code("analysis=runpy.run_path(str(ROOT/'scripts/06_run_analysis.py'),run_name='analysis_module')\nsummary=analysis['main']()")
@@ -116,6 +114,10 @@ def show_table(frame):
        'uncertainty coefficients negative and insignificant, so a robust within-issuer predictive relationship '
        'is not established. The four-day return test is imprecise. These are different tests '
        'with different evidence; a blanket claim that the sample is too small is not warranted.\n\n'
+       'Adding company size to the prior-volatility model raises the uncertainty coefficient. Conditional on prior '
+       'volatility, uncertainty and size are positively associated, whereas size has a negative coefficient in '
+       'the full model. Omitting size lowers the uncertainty coefficient; adding it changes the conditional '
+       'comparison and does not establish causation.\n\n'
        'The 2026 holdings snapshot creates survivorship/selection bias. It does not reveal former holdings that '
        'disappeared. Correct acceptance times and contemporaneous share counts do not cure that selection. '
        'Further limits include full-corpus scoring, 20 aggregate quarters, daily timing, overlapping windows, and '

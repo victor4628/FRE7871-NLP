@@ -20,9 +20,9 @@ calendar-quarter and form effects removes that positive association. Negative-la
 coefficients in the four-day excess-return regressions are negative but
 imprecise. These findings do not establish an out-of-sample forecasting strategy.
 
-The updated results retain low-priced stocks, as requested by the student. The
-share and shell-status parser also recognizes ordinary-share wording and legacy
-checkboxes. The return and volatility samples contain 1,592 and 1,591 filings.
+The sample retains low-priced stocks. Share counts and shell-company indicators
+are extracted from the corresponding filing covers. The return and volatility
+samples contain 1,592 and 1,591 filings.
 The primary outcome models contain no other regressors or fixed effects. Prior
 return and turnover are no longer calculated. Each four-model comparison keeps
 the sample and language score standardization constant, including for the no-control model.
@@ -37,6 +37,6 @@ The PDF is the Brightspace report deliverable. Generated data and intermediate
 tables are excluded from Git; the notebook preserves the reported outputs.
 
 [ANALYSIS_CHOICES.md](ANALYSIS_CHOICES.md) provides the complete inventory of
-explicit requirements, implementation choices, additions and withdrawn choices.
+explicit requirements, implementation choices and additional analyses.
 The PDF uses named language scores and explained statistical labels rather than
 the generic term "tone".

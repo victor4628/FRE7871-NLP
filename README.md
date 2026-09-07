@@ -9,8 +9,8 @@ Figure 1, all regression sensitivities and saved test output, and the
 [AI_USE.md](AI_USE.md) discloses assistance and authorship.
 
 [ANALYSIS_CHOICES.md](ANALYSIS_CHOICES.md) separates the brief's explicit
-requirements from implementation decisions, student-requested comparisons,
-extra statistical checks and withdrawn choices. The report includes a disclosure
+requirements from implementation decisions and additional statistical checks.
+The report includes a methods
 appendix and plain-language table guide. "Score" means the named uncertainty or
 negative-language measure; it is not a separate statistical test.
 

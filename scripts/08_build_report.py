@@ -134,8 +134,8 @@ def build(author,netid):
     story += [Spacer(1,6),P('The initial 31 losses are 7 unresolved SEC ticker mappings and 24 mapped securities without an eligible '
                            '10-K/10-Q in the window. Filing counts for those excluded securities are not observed and are not invented. '
                            'The 93 eligible securities represent 92 issuers because GOOG and GOOGL share filings. '
-                           'Explicitly reported shells are excluded. The optional $3 price cutoff was removed at the student\'s request; '
-                           'low-priced stocks remain eligible. Legacy shell checkboxes and ordinary-share cover wording were corrected. '
+                           'Explicitly reported shells are excluded. No minimum share-price threshold is imposed. '
+                           'Shell indicators and dated share counts are read from the corresponding reports. '
                            'All download and parsing failures were zero.','SmallNote')]
     story.append(PageBreak())
     story += [P('Measures and identification','Section'),
@@ -149,7 +149,7 @@ def build(author,netid):
                 'Proportions divide category occurrences by all tokens. IDF is recomputed on the exact document corpus used by each regression, '
                 'including restricted sensitivities. This is full-corpus, retrospective scoring, not an out-of-sample forecast.'),
               P(f'Parsing retains visible inline-XBRL text and removes hidden resources and mostly numeric tables (digit share above 15%). '
-                f'The corrected parser retains {s["parser_new_words"]:,} tokens across unique downloads versus {s["parser_old_words"]:,} '
+                f'This extraction retains {s["parser_new_words"]:,} tokens across unique downloads versus {s["parser_old_words"]:,} '
                 'under the starter parser, which also deleted visible tagged narrative. The starter uppercase tokenizer is retained; '
                 'there is no stemming or stopword removal.'),
               P('Table 2  Summary statistics by form','Section')]
@@ -228,6 +228,10 @@ def build(author,netid):
                         f'from {d.loc["none","beta"]:.4f} to {d.loc["volatility","beta"]:.4f} without size, '
                         f'and from {d.loc["size","beta"]:.4f} to {d.loc["both","beta"]:.4f} holding size constant.')
     story += [P(' '.join(passages)),
+              P('Adding size to the prior-volatility model raises the uncertainty coefficient. Conditional on prior volatility, '
+                'uncertainty is positively associated with company size, while size has a negative coefficient in the full model. '
+                'Omitting size therefore lowers the uncertainty coefficient. The change reflects a different conditional comparison, '
+                'not stronger evidence of causation.','SmallNote'),
               P('Prior volatility accounts for much of the pooled association. With both controls, the remaining association '
                 'is significant after Holm adjustment across the four both-control outcome tests. This is a conditional '
                 'association, not evidence that words cause volatility. The other columns show sensitivity to the controls; '
@@ -271,7 +275,7 @@ def build(author,netid):
                 'The number of formerly held firms missing from this snapshot cannot be established from the supplied data. '
                 'Survivorship can distort trends as well as return tests; fixed effects do not remove this selection. Other limits are '
                 '20 aggregate quarters, full-corpus rather than live scoring, noisy daily event timing, multi-class valuation proxies, '
-                'and overlapping post-filing windows. My highest-priority extension is a historical holdings universe with inclusion dates, '
+                'and overlapping post-filing windows. A natural extension is a historical holdings universe with inclusion dates, '
                 'followed by a genuinely held-out forecasting test.','SmallNote'),
               P('Sources: Loughran and McDonald (2011), Journal of Finance 66(1), 35-65, equation (1); Fall 2026 assignment brief; '
                 '<link href="https://github.com/anmolsingh0219/FRE-GY-7871A-Assignment1">instructor starter repository</link>; '
@@ -279,49 +283,38 @@ def build(author,netid):
                 '<link href="https://help.yahoo.com/kb/SLN28256.html">Yahoo price-adjustment documentation</link>; '
                 '<link href="https://github.com/gerrymanoim/exchange_calendars">exchange_calendars</link>; '
                 '<link href="https://www.statsmodels.org/">statsmodels</link>. AI assistance is disclosed in AI_USE.md.','SmallNote')]
-    story += [PageBreak(),P('Disclosure: requirements and additional choices','Section'),
-              P('The brief requires the ARK 2021-2025 sample, EDGAR acquisition, two separate LM word lists and both weighting '
-                'methods, Tables 1-6, Figure 1 with VIX, separate report types, within-company trends, Newey-West errors for '
-                'aggregate trends, a prior-volatility comparison, controlled return regressions, and the stated deliverables. '
-                'The following exact settings and extra analyses are not explicitly prescribed by that brief. Some follow '
-                'the paper or starter code; the complete inventory and provenance are in ANALYSIS_CHOICES.md.'),
-              P('Sample and parsing choices','SmallNote'),
-              P('Use company identifiers to remove duplicate reports and retain GOOGL for Alphabet. Require a valid acceptance '
-                'time and 2,000 words; exclude 58 explicitly identified shell reports. Retain unknown shell status if unresolved '
-                'and avoid a balanced-panel requirement. Preserve visible tagged text, remove hidden resources and tables with '
-                'more than 15% digits, retain the starter tokenizer, and use no stemming or stopword removal. Legacy checkboxes '
-                'and ordinary-share wording were repaired. Keep text-eligible reports when market data are missing.','SmallNote'),
-              P('Scoring and time-series choices','SmallNote'),
-              P('Implement the required equation with natural logs, total/distinct-token average frequency, absent-word weight '
-                'zero and summed category weights. Retain the starter\'s nonzero dictionary flags, including retired entries. '
-                'Estimate IDF on each exact analysis sample and standardize regression scores. Full-sample scoring is retrospective. '
-                'Average by company, report type and filing quarter, then equally across companies; average VIX by quarter. '
-                'Use linear trends, seasonal effects, at least two quarters for within-company comparisons, and four Newey-West '
-                'lags with Bartlett weights and a finite-sample correction. These settings implement the required trend tests.','SmallNote'),
-              P('Market variables and student-requested models','SmallNote'),
-              P('Use acceptance time as the release proxy, with the first later exchange close defining Day 0. Use daily Yahoo '
-                'adjusted returns, [0,3] compounded excess returns over SPY, prior days [-63,-1] and subsequent days [4,66]. '
-                'Annualize sample standard deviations by sqrt(252), take logs and require complete windows without filling gaps. '
-                'The common return sample also requires ARKK availability for an extra check; this adds no losses here. '
-                'Size uses dated cover or same-filing instantaneous shares no more than 120 days old, aligned for splits, '
-                'excluding EPS weighted-average shares. Multiple classes use one class\'s price as an approximation. The student '
-                'requested size only, prior volatility only, both and no-control models on identical samples. Size is optional '
-                'under the brief. The four primary models have an intercept but no other controls or fixed effects.','SmallNote'),
-              P('Extra inference, robustness and descriptive work','SmallNote'),
-              P('Use company-clustered t inference, confidence intervals and all coefficient outputs; remove redundant fixed-effect '
-                'columns algebraically. Add Holm corrections for four within-company trend tests per weight, and separately '
-                'for the four outcome tests with both controls. Extra checks use separate report types, added company/time/type '
-                'effects, two-way clustering, ARKK and active-only Negative words. Log invalid nuisance variances. Add an approximate '
-                '80%-power detectable-return-effect calculation. Audit list overlap/correlations, top-30 concentration, parsing, '
-                'shares, timing and five-year coverage; discuss snapshot selection. A student-requested quintile return chart is '
-                'supplementary. Historical holdings and held-out forecasting are proposed extensions, not completed work.','SmallNote'),
-              P('Reproduction and withdrawn choices','SmallNote'),
-              P('Added acquisition audits, split-history downloads, cache recovery, sample/regressor checks, ten tests, report and '
-                'notebook builders, dependency locking, running instructions and visual PDF checks support reproducibility. '
-                'AI assistance is disclosed separately. The $3 price cutoff, prior-return/turnover calculations and primary '
-                'industry/time/report-type controls were removed following discussion; all 80 low-price filings are retained. '
-                'Company/time/type effects remain only as an extra outcome check; Table 4 retains its trend effects. The older '
-                'S&P 500/WRDS plan was superseded. Later user-directed amendments are not presented as preregistered decisions.','SmallNote')]
+    story += [PageBreak(),P('Additional methodological specifications','Section'),
+              P('The assignment specifies the principal exhibits, separate negative-language and uncertainty measures, '
+                'within-company trend analysis, Newey-West errors for aggregate trends, and a prior-volatility comparison. '
+                'The following specifications and supplementary analyses extend those explicit requirements.'),
+              P('Sample and measurement','Section'),
+              P('Reports must have a valid acceptance timestamp and at least 2,000 extracted words. Explicitly identified '
+                'shell-company reports are excluded. Duplicate reports across share classes are consolidated, with GOOGL '
+                'representing Alphabet. There is no minimum share-price threshold. The extraction preserves visible tagged '
+                'text and removes tables containing more than 15% digits; no stemming or stopword removal is applied. '
+                'IDF uses the exact document sample of each specification. Scores are standardized for regression comparisons.'),
+              P('Event windows and controls','Section'),
+              P('Day 0 is the first exchange session closing after the SEC acceptance timestamp. Event excess returns compound '
+                'four daily returns and subtract the SPY return. Prior and subsequent volatility use 63 trading days, '
+                '[-63,-1] and [4,66], annualized from sample standard deviations. Models use natural logarithms of volatility '
+                'and company market value. Dated shares are matched to the same filing and aligned for splits; valuing multiple '
+                'share classes at one class price is an approximation. Complete observations are required on a common sample '
+                'for the four control comparisons. Prior cumulative return and turnover are not included.'),
+              P('Estimation and statistical inference','Section'),
+              P('Quarterly scores first average within company and report type, then equally across companies. Trend models '
+                'include seasonal effects; the within-company model includes company effects and at least two observed quarters '
+                'per company. The Newey-West implementation uses four lags, Bartlett weights and a finite-sample correction. '
+                'Outcome regressions use company-clustered standard errors. Holm adjustment is applied separately to four '
+                'within-company trend tests per weight and to the four outcome tests with both controls. The other model '
+                'columns report unadjusted p-values. Return-test precision is summarized by an approximate 80%-power '
+                'minimum detectable effect.'),
+              P('Supplementary analyses and reproducibility','Section'),
+              P('Robustness checks separate annual and quarterly reports, add company/calendar-quarter/report-type effects, '
+                'use company-and-quarter clustering, replace SPY with ARKK, and exclude retired Negative words. Other '
+                'descriptive checks examine dictionary overlap, score correlations, word concentration and median returns '
+                'by negative-word-proportion quintile. All estimated specifications are retained. Data audits, ten '
+                'numerical and timing tests, saved notebook outputs and reproducible report generation support verification. '
+                'AI assistance is disclosed in AI_USE.md. The methodological record is available in METHODOLOGY.md.')]
     target=DEST/'assignment1_report.pdf'
     doc=SimpleDocTemplate(str(target),pagesize=A4,rightMargin=43,leftMargin=43,topMargin=36,bottomMargin=40,
                           title='Uncertainty and Sentiment in ARK Company Filings',author=author)

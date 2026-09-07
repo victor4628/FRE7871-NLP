@@ -2,6 +2,13 @@
 
 **Tool used:** OpenAI Codex.
 
+The final editorial review converted conversational change-history language in
+the report and notebook into formal descriptions of the implemented methods.
+Development history remains in this disclosure. Codex verified the increase in
+the uncertainty coefficient after adding size using the omitted-variable
+coefficient identity on the common sample; this explanation does not change the
+regression specification or results.
+
 **Scope of assistance:** Codex read and compared the assignment brief and reference
 paper, imported the instructor's repository, configured the environment, ran the
 downloads, and generated the added analysis code, numerical tests, executed
