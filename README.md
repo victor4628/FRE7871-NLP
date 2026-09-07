@@ -10,8 +10,7 @@ Figure 1, all regression sensitivities and saved test output, and the
 
 [ANALYSIS_CHOICES.md](ANALYSIS_CHOICES.md) separates the brief's explicit
 requirements from implementation decisions and additional statistical checks.
-The report includes a methods
-appendix and plain-language table guide. "Score" means the named uncertainty or
+The report includes a plain-language table guide. "Score" means the named uncertainty or
 negative-language measure; it is not a separate statistical test.
 
 The 2021-2025 text sample contains 1,624 reports; volatility and return models

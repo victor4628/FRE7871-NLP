@@ -48,7 +48,7 @@ def tab(headers,rows,widths):
     t.setStyle(TableStyle([
         ('BACKGROUND',(0,0),(-1,0),NAVY),('VALIGN',(0,0),(-1,-1),'TOP'),
         ('LEFTPADDING',(0,0),(-1,-1),5),('RIGHTPADDING',(0,0),(-1,-1),5),
-        ('TOPPADDING',(0,0),(-1,-1),4),('BOTTOMPADDING',(0,0),(-1,-1),4),
+        ('TOPPADDING',(0,0),(-1,-1),3),('BOTTOMPADDING',(0,0),(-1,-1),3),
         ('ROWBACKGROUNDS',(0,1),(-1,-1),[colors.HexColor('#eef3f6'),colors.white]),
         ('LINEBELOW',(0,-1),(-1,-1),.4,colors.HexColor('#c4cdd4'))]))
     return t
@@ -97,6 +97,9 @@ def build(author,netid):
     flows=pd.read_csv(RESULTS/'table1_filings.csv')
     features=pd.read_csv(ROOT/'data/interim/analysis/filing_features.csv',dtype={'cik':str})
     core=pd.read_csv(ROOT/'data/interim/analysis/scored_text_corpus.csv',dtype={'cik':str})
+    core_features=features.loc[features.accession.isin(core.accession)].copy()
+    missing_size=int(core_features.market_value.isna().sum())
+    missing_size_and_prevol=int((core_features.market_value.isna() & core_features.pre_vol.isna()).sum())
     family=table4.loc[table4.measure.eq('negative_prop') & table4.form.eq('10-K')].iloc[0]
     controlled=table5.loc[table5.control_set.eq('both')]
     w=509
@@ -136,6 +139,8 @@ def build(author,netid):
                            'The 93 eligible securities represent 92 issuers because GOOG and GOOGL share filings. '
                            'Explicitly reported shells are excluded. No minimum share-price threshold is imposed. '
                            'Shell indicators and dated share counts are read from the corresponding reports. '
+                           f'{missing_size} otherwise eligible filings lack a usable share count; all {missing_size_and_prevol} also lack '
+                           'the required prior-volatility history and therefore disappear at that earlier sequential screen. '
                            'All download and parsing failures were zero.','SmallNote')]
     story.append(PageBreak())
     story += [P('Measures and identification','Section'),
@@ -208,7 +213,7 @@ def build(author,netid):
                      f(r.within_beta,4),pv(r.within_p),pv(r.within_holm_p)])
     story.append(tab(['Form','Measure','Overall slope','OLS t','NW t','Within-company slope','Within-company p','Adjusted p (Holm)'],rows,[35,115,62,45,45,67,70,70]))
     story += [P('Slopes are standard deviations per quarter. OLS means ordinary least squares; NW means Newey-West. Aggregate models include quarter-of-year effects, with Bartlett Newey-West SEs (4 lags, '
-                'finite-sample correction) alongside naive OLS t statistics. Within-company models include issuer and seasonal effects '
+                'finite-sample correction) because quarterly residuals may be serially correlated; naive OLS t statistics are shown for comparison. Within-company models include issuer and seasonal effects '
                 'and company-clustered SEs; issuers observed in only one quarter are omitted from that test. Holm adjustment covers the '
                 'four within-company tests separately for each weighting scheme. Redundant fixed-effect columns are removed algebraically.','SmallNote'),
               P('The within-company results, rather than the pooled chart, support the main trend interpretation. Annual-report negative '
@@ -252,7 +257,8 @@ def build(author,netid):
               P('Form-specific samples re-estimate IDF. The firm FE sensitivity adds issuer, calendar-quarter and form effects; '
                 'both uncertainty coefficients then become negative and insignificant. A robust within-company predictive '
                 'relationship is therefore not established. Two-way clustering has only 20 time clusters; invalid nuisance '
-                'variances are logged in the notebook.','SmallNote')]
+                'variances are logged in the notebook. Annual- and quarterly-report estimates are positive, with larger point '
+                'estimates for annual reports, but no interaction test establishes that the two forms differ.','SmallNote')]
     story.append(PageBreak())
     story += [P('Table 6  Sentiment and four-day excess returns','Section'),
               P('The outcome is stock minus SPY buy-and-hold return over [0,3], in percentage points. The same four models '
@@ -266,8 +272,23 @@ def build(author,netid):
               P('Approximate 80%-power minimum detectable effects for the models with both controls are '
                 f'{both.loc["negative_prop","mde80"]:.2f} and {both.loc["negative_tfidf","mde80"]:.2f} percentage points per SD, '
                 'using (cluster-t critical + 0.842) times the clustered SE. This is a precision diagnostic, not observed power. '
-                'Form-specific, added fixed-effect, two-way-cluster, ARKK-benchmark and active-word-list results are saved '
-                'in the notebook. Holm adjustment covers only the four pooled both-control outcome tests.','SmallNote')]
+                'Holm adjustment covers only the four pooled both-control outcome tests.','SmallNote'),
+              P('Sensitivity of the model with both controls','Section')]
+    rr=all_models.loc[all_models.outcome.eq('return') & all_models.control_set.eq('both') & ~all_models.variant.eq('pooled')]
+    rows=[]
+    readable={'10-K':'Annual reports only','10-Q':'Quarterly reports only',
+              'firm_FE':'Add company/time/type effects','two_way':'Cluster by company and quarter',
+              'ARKK':'ARKK benchmark','active_negative':'Exclude retired Negative words'}
+    for variant in ['10-K','10-Q','firm_FE','two_way','ARKK','active_negative']:
+        d=rr.loc[rr.variant.eq(variant)]
+        values=[]
+        for weight in ['prop','tfidf']:
+            r=d.loc[d.measure.str.endswith(weight)].iloc[0]
+            values.append(f'{r.beta:.3f} / '+pv(r.p))
+        rows.append([readable[variant]]+values)
+    story += [tab(['Specification','Proportion: coefficient / p','TF-IDF: coefficient / p'],rows,[159,175,175]),
+              P('All return sensitivities remain statistically imprecise. In particular, replacing SPY with ARKK does not '
+                'change the conclusion. Form-specific IDF is re-estimated on each restricted sample.','SmallNote')]
     full_years=core.groupby('cik').filing_date.apply(lambda x:pd.to_datetime(x).dt.year.nunique())
     story += [P('Limits and next step','Section'),
               P(f'The 124-security universe is selected from 2026 holdings snapshots, not historical ARK ownership. '
@@ -276,45 +297,15 @@ def build(author,netid):
                 'Survivorship can distort trends as well as return tests; fixed effects do not remove this selection. Other limits are '
                 '20 aggregate quarters, full-corpus rather than live scoring, noisy daily event timing, multi-class valuation proxies, '
                 'and overlapping post-filing windows. A natural extension is a historical holdings universe with inclusion dates, '
-                'followed by a genuinely held-out forecasting test.','SmallNote'),
+                'followed by a held-out forecasting test. That change requires historical holdings data and rebuilding the sample '
+                'according to each company\'s actual inclusion dates.','SmallNote'),
               P('Sources: Loughran and McDonald (2011), Journal of Finance 66(1), 35-65, equation (1); Fall 2026 assignment brief; '
                 '<link href="https://github.com/anmolsingh0219/FRE-GY-7871A-Assignment1">instructor starter repository</link>; '
                 '<link href="https://sraf.nd.edu/loughranmcdonald-master-dictionary/">LM dictionary documentation</link>; '
                 '<link href="https://help.yahoo.com/kb/SLN28256.html">Yahoo price-adjustment documentation</link>; '
                 '<link href="https://github.com/gerrymanoim/exchange_calendars">exchange_calendars</link>; '
-                '<link href="https://www.statsmodels.org/">statsmodels</link>. AI assistance is disclosed in AI_USE.md.','SmallNote')]
-    story += [PageBreak(),P('Additional methodological specifications','Section'),
-              P('The assignment specifies the principal exhibits, separate negative-language and uncertainty measures, '
-                'within-company trend analysis, Newey-West errors for aggregate trends, and a prior-volatility comparison. '
-                'The following specifications and supplementary analyses extend those explicit requirements.'),
-              P('Sample and measurement','Section'),
-              P('Reports must have a valid acceptance timestamp and at least 2,000 extracted words. Explicitly identified '
-                'shell-company reports are excluded. Duplicate reports across share classes are consolidated, with GOOGL '
-                'representing Alphabet. There is no minimum share-price threshold. The extraction preserves visible tagged '
-                'text and removes tables containing more than 15% digits; no stemming or stopword removal is applied. '
-                'IDF uses the exact document sample of each specification. Scores are standardized for regression comparisons.'),
-              P('Event windows and controls','Section'),
-              P('Day 0 is the first exchange session closing after the SEC acceptance timestamp. Event excess returns compound '
-                'four daily returns and subtract the SPY return. Prior and subsequent volatility use 63 trading days, '
-                '[-63,-1] and [4,66], annualized from sample standard deviations. Models use natural logarithms of volatility '
-                'and company market value. Dated shares are matched to the same filing and aligned for splits; valuing multiple '
-                'share classes at one class price is an approximation. Complete observations are required on a common sample '
-                'for the four control comparisons. Prior cumulative return and turnover are not included.'),
-              P('Estimation and statistical inference','Section'),
-              P('Quarterly scores first average within company and report type, then equally across companies. Trend models '
-                'include seasonal effects; the within-company model includes company effects and at least two observed quarters '
-                'per company. The Newey-West implementation uses four lags, Bartlett weights and a finite-sample correction. '
-                'Outcome regressions use company-clustered standard errors. Holm adjustment is applied separately to four '
-                'within-company trend tests per weight and to the four outcome tests with both controls. The other model '
-                'columns report unadjusted p-values. Return-test precision is summarized by an approximate 80%-power '
-                'minimum detectable effect.'),
-              P('Supplementary analyses and reproducibility','Section'),
-              P('Robustness checks separate annual and quarterly reports, add company/calendar-quarter/report-type effects, '
-                'use company-and-quarter clustering, replace SPY with ARKK, and exclude retired Negative words. Other '
-                'descriptive checks examine dictionary overlap, score correlations, word concentration and median returns '
-                'by negative-word-proportion quintile. All estimated specifications are retained. Data audits, ten '
-                'numerical and timing tests, saved notebook outputs and reproducible report generation support verification. '
-                'AI assistance is disclosed in AI_USE.md. The methodological record is available in METHODOLOGY.md.')]
+                '<link href="https://www.statsmodels.org/">statsmodels</link>. AI assistance is disclosed in AI_USE.md; '
+                'implementation choices beyond the brief are recorded in ANALYSIS_CHOICES.md.','SmallNote')]
     target=DEST/'assignment1_report.pdf'
     doc=SimpleDocTemplate(str(target),pagesize=A4,rightMargin=43,leftMargin=43,topMargin=36,bottomMargin=40,
                           title='Uncertainty and Sentiment in ARK Company Filings',author=author)

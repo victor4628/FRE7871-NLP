@@ -4,7 +4,7 @@
 **NetID:** yc8027
 **Repository:** https://github.com/victor4628/FRE7871-NLP
 
-The completed English report, including a disclosure appendix, is
+The completed six-page English report is
 [assignment1_report.pdf](output/pdf/assignment1_report.pdf). It contains the
 sample waterfall, parsing and timing decisions, equation (1), six tables,
 Figure 1, inference and robustness checks, test-specific conclusions, and
@@ -36,7 +36,7 @@ Regenerate the PDF from the computed tables using:
 The PDF is the Brightspace report deliverable. Generated data and intermediate
 tables are excluded from Git; the notebook preserves the reported outputs.
 
-[ANALYSIS_CHOICES.md](ANALYSIS_CHOICES.md) provides the complete inventory of
-explicit requirements, implementation choices and additional analyses.
+[ANALYSIS_CHOICES.md](ANALYSIS_CHOICES.md) records implementation choices and
+additional analyses without lengthening the submitted report.
 The PDF uses named language scores and explained statistical labels rather than
 the generic term "tone".
