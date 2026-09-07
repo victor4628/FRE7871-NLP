@@ -62,22 +62,24 @@ def page_number(canvas,doc):
 
 def control_panels(models, coefficients):
     panels=[]
+    score_label = 'Uncertainty score' if models.iloc[0].outcome == 'volatility' else 'Negative-language score'
     for weight, label in [('prop','Proportion'),('tfidf','TF-IDF')]:
         d=models.loc[models.measure.str.endswith(weight)].set_index('control_set').loc[
             ['none','size','volatility','both']]
         rows=[]
-        for term, title in [('tone_z','Tone (1 SD)'),('log_market_value','Log market value'),
-                            ('log_pre_vol','Log prior volatility')]:
+        for term, title in [('score_z',score_label+'<br/>(+1 standard deviation)'),
+                            ('log_market_value','Company size (log market value)'),
+                            ('log_pre_vol','Prior volatility (log)')]:
             values=[]
             for _, model in d.iterrows():
                 found=coefficients.loc[coefficients.model.eq(model.model)&coefficients.term.eq(term)]
                 values.append('-' if found.empty else f'{found.iloc[0].beta:.4f}<br/>({found.iloc[0].se:.4f})')
             rows.append([title]+values)
-        rows += [['N']+[f(r.n,0) for _,r in d.iterrows()],
-                 ['Tone p']+[pv(r.p) for _,r in d.iterrows()],
-                 ['Tone Holm p']+[pv(r.holm_p) for _,r in d.iterrows()]]
+        rows += [['Number of filings']+[f(r.n,0) for _,r in d.iterrows()],
+                 ['Score p-value']+[pv(r.p) for _,r in d.iterrows()],
+                 ['Adjusted p-value (Holm)']+[('Not applied' if pd.isna(r.holm_p) else pv(r.holm_p)) for _,r in d.iterrows()]]
         panels += [P(label,'SmallNote'),
-                   tab(['Regressor / statistic','None','Size only','Volatility only','Both'],rows,[137,93,93,93,93]),
+                   tab(['Variable / statistic','No controls','Size only','Prior volatility','Both controls'],rows,[137,93,93,93,93]),
                    Spacer(1,7)]
     return panels
 
@@ -121,10 +123,14 @@ def build(author,netid):
     vol=flows.loc[flows.branch.eq('volatility')].reset_index(drop=True)
     ret=flows.loc[flows.branch.eq('return')].reset_index(drop=True)
     rows=[]
-    for i in range(len(vol)):
-        name=vol.iloc[i]['filter'] if i<len(vol)-1 else 'Complete outcome window and benchmark'
+    for i in range(len(vol)-1):
+        name=vol.iloc[i]['filter']
         rows.append([escape(name),f'{vol.iloc[i].removed} / {vol.iloc[i].remaining}',f'{ret.iloc[i].removed} / {ret.iloc[i].remaining}'])
-    story.append(tab(['Market screen (separate branches)','Vol: removed / left','Return: removed / left'],rows,[309,100,100]))
+    rows += [['63 post-event daily returns available (volatility)',
+              f'{vol.iloc[-1].removed} / {vol.iloc[-1].remaining}','Not applicable'],
+             ['4 event-day stock and SPY/ARKK returns available',
+              'Not applicable',f'{ret.iloc[-1].removed} / {ret.iloc[-1].remaining}']]
+    story.append(tab(['Market-data requirement','Volatility: removed / kept','Returns: removed / kept'],rows,[309,100,100]))
     story += [Spacer(1,6),P('The initial 31 losses are 7 unresolved SEC ticker mappings and 24 mapped securities without an eligible '
                            '10-K/10-Q in the window. Filing counts for those excluded securities are not observed and are not invented. '
                            'The 93 eligible securities represent 92 issuers because GOOG and GOOGL share filings. '
@@ -168,7 +174,14 @@ def build(author,netid):
                 'Tables 5-6 compare no controls, size only, prior volatility only and both on a common sample. '
                 'The primary models contain no other controls or fixed effects. Prior return and turnover are not calculated. '
                 'The 63 preceding returns provide prior volatility; size needs one preceding closing price and a share count. '
-                'Standard errors cluster by issuer.','SmallNote')]
+                'Standard errors cluster by issuer.','SmallNote'),
+              P('Reading the tables','Section'),
+              P('The score row is the estimated association for a one-standard-deviation increase in the named language score. '
+                'In Table 5 the score measures uncertainty; in Table 6 it measures negative language. Parentheses show the uncertainty of the estimated coefficient: standard '
+                'errors allowing repeated reports from the same company to be related. The score p-value tests a zero score '
+                'coefficient. The Holm-adjusted p-value accounts for multiple tests; Not applied means no adjustment was made '
+                'for that column, not that its result is insignificant. Log means natural logarithm. SD means standard deviation; '
+                'P25/P75 are the 25th/75th percentiles. The intercept is a fitted baseline and is included in every model.','SmallNote')]
     story.append(PageBreak())
     story += [P('Table 3  Words driving each measure','Section'),
               P('Shares below divide each word count by all occurrences of words on its own list, not by all words in the filings. '
@@ -183,35 +196,35 @@ def build(author,netid):
                            'Equation (1) reduces that contribution through document frequency, while log term frequency dampens repetition. '
                            'A high TF-IDF value can also reflect unusual vocabulary and document structure; it is not a probability of bad news.','SmallNote')]
     story.append(PageBreak())
-    story += [P('Figure 1  Tone and market uncertainty','Section'),
+    story += [P('Figure 1  Language scores and VIX','Section'),
               P('Each line first averages filings within issuer, form and filing quarter, then weights issuers equally. '
                 'Annual and quarterly reports remain separate. VIX is the quarterly mean on the right axis; it is a market comparison, '
                 'not the dependent variable in the firm-volatility regressions.','SmallNote'),
               Image(str(RESULTS/'figure1.png'),width=w,height=w*7.2/11.5),
-              P('Table 4  Aggregate and within-issuer trends','Section')]
+              P('Table 4  Overall trends and changes within companies','Section')]
     rows=[]
     for _,r in table4.iterrows():
         rows.append([r.form,label[r.measure],f(r.aggregate_beta,4),f(r.aggregate_ols_t,2),f(r.aggregate_hac_t,2),
                      f(r.within_beta,4),pv(r.within_p),pv(r.within_holm_p)])
-    story.append(tab(['Form','Measure','Agg. slope','OLS t','NW t','Within slope','p','Holm p'],rows,[35,115,62,45,45,67,70,70]))
-    story += [P('Slopes are SDs per quarter. Aggregate models include quarter-of-year effects, with Bartlett Newey-West SEs (4 lags, '
-                'finite-sample correction) alongside naive OLS t statistics. Within-issuer models include issuer and seasonal effects '
-                'and issuer-clustered SEs; issuers observed in only one quarter are omitted from that test. Holm adjustment covers the '
-                'four within-issuer tests separately for each weighting scheme. Redundant fixed-effect columns are removed algebraically.','SmallNote'),
-              P('The within-issuer results, rather than the pooled chart, support the main trend interpretation. Annual-report negative '
+    story.append(tab(['Form','Measure','Overall slope','OLS t','NW t','Within-company slope','Within-company p','Adjusted p (Holm)'],rows,[35,115,62,45,45,67,70,70]))
+    story += [P('Slopes are standard deviations per quarter. OLS means ordinary least squares; NW means Newey-West. Aggregate models include quarter-of-year effects, with Bartlett Newey-West SEs (4 lags, '
+                'finite-sample correction) alongside naive OLS t statistics. Within-company models include issuer and seasonal effects '
+                'and company-clustered SEs; issuers observed in only one quarter are omitted from that test. Holm adjustment covers the '
+                'four within-company tests separately for each weighting scheme. Redundant fixed-effect columns are removed algebraically.','SmallNote'),
+              P('The within-company results, rather than the pooled chart, support the main trend interpretation. Annual-report negative '
                 'language rises under both weights. Uncertainty does not have one universal trend: annual-report proportional uncertainty '
                 'rises while its TF-IDF counterpart does not; quarterly-report uncertainty declines. Changing report mix and issuer mix '
                 'therefore cannot be ignored. With only 20 aggregate quarters, even corrected aggregate inference is fragile.','SmallNote')]
     story.append(PageBreak())
     story += [P('Table 5  Uncertainty and subsequent volatility','Section'),
               P('The outcome is log annualized volatility on days [4,66]. Each panel compares exactly the same filings and '
-                'standardized tone under four control choices. None means tone plus intercept only; size is log market value '
-                'and volatility is log prior volatility. Parentheses contain issuer-clustered SEs.')]
+                'standardized uncertainty scores under four control choices. No controls means the uncertainty score plus an intercept; size is log market value '
+                'and volatility is log prior volatility. Parentheses contain company-clustered SEs.')]
     story += control_panels(table5, coefficients)
     passages=[]
     for weight in ['prop','tfidf']:
         d=table5.loc[table5.measure.eq('uncertainty_'+weight)].set_index('control_set')
-        passages.append(f'{"Proportion" if weight=="prop" else "TF-IDF"}: adding prior volatility changes the tone coefficient '
+        passages.append(f'{"Proportion" if weight=="prop" else "TF-IDF"}: adding prior volatility changes the uncertainty-score coefficient '
                         f'from {d.loc["none","beta"]:.4f} to {d.loc["volatility","beta"]:.4f} without size, '
                         f'and from {d.loc["size","beta"]:.4f} to {d.loc["both","beta"]:.4f} holding size constant.')
     story += [P(' '.join(passages)),
@@ -228,20 +241,22 @@ def build(author,netid):
         for weight in ['prop','tfidf']:
             r=d.loc[d.measure.str.endswith(weight)].iloc[0]
             values.append(f'{r.beta:.4f} / '+pv(r.p))
-        rows.append([variant.replace('_',' ')]+values)
+        readable={'10-K':'Annual reports only','10-Q':'Quarterly reports only',
+                  'firm_FE':'Add company/time/type effects','two_way':'Cluster by company and quarter'}
+        rows.append([readable[variant]]+values)
     story += [tab(['Specification','Proportion: coefficient / p','TF-IDF: coefficient / p'],rows,[159,175,175]),
               P('Form-specific samples re-estimate IDF. The firm FE sensitivity adds issuer, calendar-quarter and form effects; '
-                'both uncertainty coefficients then become negative and insignificant. A robust within-issuer predictive '
+                'both uncertainty coefficients then become negative and insignificant. A robust within-company predictive '
                 'relationship is therefore not established. Two-way clustering has only 20 time clusters; invalid nuisance '
                 'variances are logged in the notebook.','SmallNote')]
     story.append(PageBreak())
     story += [P('Table 6  Sentiment and four-day excess returns','Section'),
               P('The outcome is stock minus SPY buy-and-hold return over [0,3], in percentage points. The same four models '
-                'are estimated on a common sample within each weight. Parentheses contain issuer-clustered SEs; a dash '
+                'are estimated on a common sample within each weight. Parentheses contain company-clustered SEs; a dash '
                 'means the regressor is omitted, not estimated to be zero.')]
     story += control_panels(table6, coefficients)
     both=table6.loc[table6.control_set.eq('both')].set_index('measure')
-    story += [P('All four specifications produce negative but statistically imprecise tone coefficients. With both controls, '
+    story += [P('All four specifications produce negative but statistically imprecise negative-language coefficients. With both controls, '
                 f'the estimates are {both.loc["negative_prop","beta"]:.3f} and {both.loc["negative_tfidf","beta"]:.3f} percentage '
                 'points per SD. Failure to reject zero does not establish the absence of an economically meaningful effect.'),
               P('Approximate 80%-power minimum detectable effects for the models with both controls are '
@@ -264,6 +279,49 @@ def build(author,netid):
                 '<link href="https://help.yahoo.com/kb/SLN28256.html">Yahoo price-adjustment documentation</link>; '
                 '<link href="https://github.com/gerrymanoim/exchange_calendars">exchange_calendars</link>; '
                 '<link href="https://www.statsmodels.org/">statsmodels</link>. AI assistance is disclosed in AI_USE.md.','SmallNote')]
+    story += [PageBreak(),P('Disclosure: requirements and additional choices','Section'),
+              P('The brief requires the ARK 2021-2025 sample, EDGAR acquisition, two separate LM word lists and both weighting '
+                'methods, Tables 1-6, Figure 1 with VIX, separate report types, within-company trends, Newey-West errors for '
+                'aggregate trends, a prior-volatility comparison, controlled return regressions, and the stated deliverables. '
+                'The following exact settings and extra analyses are not explicitly prescribed by that brief. Some follow '
+                'the paper or starter code; the complete inventory and provenance are in ANALYSIS_CHOICES.md.'),
+              P('Sample and parsing choices','SmallNote'),
+              P('Use company identifiers to remove duplicate reports and retain GOOGL for Alphabet. Require a valid acceptance '
+                'time and 2,000 words; exclude 58 explicitly identified shell reports. Retain unknown shell status if unresolved '
+                'and avoid a balanced-panel requirement. Preserve visible tagged text, remove hidden resources and tables with '
+                'more than 15% digits, retain the starter tokenizer, and use no stemming or stopword removal. Legacy checkboxes '
+                'and ordinary-share wording were repaired. Keep text-eligible reports when market data are missing.','SmallNote'),
+              P('Scoring and time-series choices','SmallNote'),
+              P('Implement the required equation with natural logs, total/distinct-token average frequency, absent-word weight '
+                'zero and summed category weights. Retain the starter\'s nonzero dictionary flags, including retired entries. '
+                'Estimate IDF on each exact analysis sample and standardize regression scores. Full-sample scoring is retrospective. '
+                'Average by company, report type and filing quarter, then equally across companies; average VIX by quarter. '
+                'Use linear trends, seasonal effects, at least two quarters for within-company comparisons, and four Newey-West '
+                'lags with Bartlett weights and a finite-sample correction. These settings implement the required trend tests.','SmallNote'),
+              P('Market variables and student-requested models','SmallNote'),
+              P('Use acceptance time as the release proxy, with the first later exchange close defining Day 0. Use daily Yahoo '
+                'adjusted returns, [0,3] compounded excess returns over SPY, prior days [-63,-1] and subsequent days [4,66]. '
+                'Annualize sample standard deviations by sqrt(252), take logs and require complete windows without filling gaps. '
+                'The common return sample also requires ARKK availability for an extra check; this adds no losses here. '
+                'Size uses dated cover or same-filing instantaneous shares no more than 120 days old, aligned for splits, '
+                'excluding EPS weighted-average shares. Multiple classes use one class\'s price as an approximation. The student '
+                'requested size only, prior volatility only, both and no-control models on identical samples. Size is optional '
+                'under the brief. The four primary models have an intercept but no other controls or fixed effects.','SmallNote'),
+              P('Extra inference, robustness and descriptive work','SmallNote'),
+              P('Use company-clustered t inference, confidence intervals and all coefficient outputs; remove redundant fixed-effect '
+                'columns algebraically. Add Holm corrections for four within-company trend tests per weight, and separately '
+                'for the four outcome tests with both controls. Extra checks use separate report types, added company/time/type '
+                'effects, two-way clustering, ARKK and active-only Negative words. Log invalid nuisance variances. Add an approximate '
+                '80%-power detectable-return-effect calculation. Audit list overlap/correlations, top-30 concentration, parsing, '
+                'shares, timing and five-year coverage; discuss snapshot selection. A student-requested quintile return chart is '
+                'supplementary. Historical holdings and held-out forecasting are proposed extensions, not completed work.','SmallNote'),
+              P('Reproduction and withdrawn choices','SmallNote'),
+              P('Added acquisition audits, split-history downloads, cache recovery, sample/regressor checks, ten tests, report and '
+                'notebook builders, dependency locking, running instructions and visual PDF checks support reproducibility. '
+                'AI assistance is disclosed separately. The $3 price cutoff, prior-return/turnover calculations and primary '
+                'industry/time/report-type controls were removed following discussion; all 80 low-price filings are retained. '
+                'Company/time/type effects remain only as an extra outcome check; Table 4 retains its trend effects. The older '
+                'S&P 500/WRDS plan was superseded. Later user-directed amendments are not presented as preregistered decisions.','SmallNote')]
     target=DEST/'assignment1_report.pdf'
     doc=SimpleDocTemplate(str(target),pagesize=A4,rightMargin=43,leftMargin=43,topMargin=36,bottomMargin=40,
                           title='Uncertainty and Sentiment in ARK Company Filings',author=author)

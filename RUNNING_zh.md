@@ -54,7 +54,8 @@ $env:PYTHONUNBUFFERED = "1"
 仅重新计算表格时，可以单独运行 `scripts/06_run_analysis.py`。更改分析代码后重新执行 07 和 08，保持输出一致。
 
 - `assignment1.ipynb`：已执行的 Notebook，包含六张表、一张图、完整稳健性结果和十项测试输出。
-- `output/pdf/assignment1_report.pdf`：六页英文报告。
+- `output/pdf/assignment1_report.pdf`：英文报告，含术语解释与方法选择披露附录。
+- `ANALYSIS_CHOICES.md`：区分作业明确要求、实施口径、用户要求的比较、额外检验和已撤销的选择。
 - `METHODOLOGY.md`：样本、变量、TF-IDF、事件日和统计检验定义。
 - `AI_USE.md`：实际 AI 使用与作者贡献说明。
 - `outputs/analysis/`：本地表格、图、样本审计及全部回归系数，不提交 Git。

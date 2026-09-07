@@ -32,6 +32,12 @@ removed the earlier prior-return and turnover calculations and primary fixed
 effects. The additional issuer/time-effects specification is reported separately
 as a sensitivity, not hidden inside the four primary models.
 
+The student also requested clearer terminology and an explicit inventory of work
+not specifically required by the assignment. Codex renamed reader-facing score
+and statistical labels, added a table guide and disclosure appendix, and wrote
+ANALYSIS_CHOICES.md distinguishing requirements, implementation, extra checks and
+withdrawn methods. This documentation revision does not change model estimates.
+
 **Errors and issues corrected during AI-assisted work:** The initial plan used
 the superseded S&P 500 / 2018-2022 assignment and was replaced by the current ARK
 / 2021-2025 brief. Security records were initially confused with distinct issuers
@@ -51,7 +57,7 @@ Codex also corrected an explanatory counting error: BMNR accounts for 16 missing
 pre-history filings, not the 17 previously stated in conversation.
 
 **Verification performed by Codex:** The acquisition audit, ten numerical and
-timing tests, and the complete notebook were run locally. All six report pages
+timing tests, and the complete notebook were run locally. All report pages
 were rendered and visually inspected. Report values are read from computed
 tables. All estimated sensitivities are retained, including insignificant
 results and the disappearance of the pooled uncertainty association with issuer

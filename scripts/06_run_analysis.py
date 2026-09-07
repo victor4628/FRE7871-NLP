@@ -50,7 +50,9 @@ def make_figure(scored):
         for form in ["10-K","10-Q"]:
             values=quarterly.loc[quarterly.form.eq(form)].set_index("quarter")[tone].reindex(quarters)
             ax.plot(range(20),values*(100 if tone.endswith("prop") else 1),label=form,color=colors[form],lw=1.8,marker="o",ms=3)
-        ax.set_title(tone.replace("_prop"," proportion").replace("_tfidf"," TF-IDF").replace("_"," ").title(),loc="left",fontweight="bold")
+        names={"negative_prop":"Negative-word proportion", "negative_tfidf":"Negative-language TF-IDF",
+               "uncertainty_prop":"Uncertainty-word proportion", "uncertainty_tfidf":"Uncertainty TF-IDF"}
+        ax.set_title(names[tone],loc="left",fontweight="bold")
         ax.set_ylabel("% of words" if tone.endswith("prop") else "Sum of term weights")
         ax.grid(axis="y",alpha=.18)
         other=ax.twinx()
@@ -80,7 +82,7 @@ def main():
     # A common sample makes the four user-requested control specifications
     # comparable. Prior return and turnover are no longer required controls.
     market_steps=[("Complete 63-day pre-filing returns and positive volatility",lambda d:d.log_pre_vol.notna()),
-                  ("Dated instantaneous common shares and positive market value",lambda d:d.log_market_value.notna())]
+                  ("Available dated share count and positive company market value",lambda d:d.log_market_value.notna())]
     vol_sample,vol_flow=waterfall(core,market_steps+[("Complete 63-day post-filing returns",lambda d:d.log_post_vol.notna())],"volatility")
     ret_sample,ret_flow=waterfall(core,market_steps+[("Complete four-day stock and benchmark returns",lambda d:d.excess_return.notna() & d.excess_return_arkk.notna())],"return")
     flows=pd.DataFrame(text_flow+vol_flow+ret_flow)
@@ -91,7 +93,7 @@ def main():
         ["Unique cleaned securities in frozen snapshot",124,0],
         ["SEC ticker-to-CIK mapping found",len(universe),124-len(universe)],
         ["At least one 2021-2025 10-K/10-Q",int(universe.status.eq('domestic_filer').sum()),int(universe.status.ne('domestic_filer').sum())],
-        ["Distinct issuers after multi-class consolidation",meta.cik.nunique(),1],
+        ["Unique companies (GOOG and GOOGL count as one)",meta.cik.nunique(),1],
     ],columns=["filter","remaining","removed"])
     company_table.to_csv(RESULTS/"table1_universe.csv",index=False)
     eligible=universe.loc[universe.status.eq('domestic_filer')]

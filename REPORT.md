@@ -4,7 +4,7 @@
 **NetID:** yc8027
 **Repository:** https://github.com/victor4628/FRE7871-NLP
 
-The completed six-page English report is
+The completed English report, including a disclosure appendix, is
 [assignment1_report.pdf](output/pdf/assignment1_report.pdf). It contains the
 sample waterfall, parsing and timing decisions, equation (1), six tables,
 Figure 1, inference and robustness checks, test-specific conclusions, and
@@ -25,7 +25,7 @@ share and shell-status parser also recognizes ordinary-share wording and legacy
 checkboxes. The return and volatility samples contain 1,592 and 1,591 filings.
 The primary outcome models contain no other regressors or fixed effects. Prior
 return and turnover are no longer calculated. Each four-model comparison keeps
-the sample and tone standardization constant, including for the no-control model.
+the sample and language score standardization constant, including for the no-control model.
 
 Regenerate the PDF from the computed tables using:
 
@@ -35,3 +35,8 @@ Regenerate the PDF from the computed tables using:
 
 The PDF is the Brightspace report deliverable. Generated data and intermediate
 tables are excluded from Git; the notebook preserves the reported outputs.
+
+[ANALYSIS_CHOICES.md](ANALYSIS_CHOICES.md) provides the complete inventory of
+explicit requirements, implementation choices, additions and withdrawn choices.
+The PDF uses named language scores and explained statistical labels rather than
+the generic term "tone".

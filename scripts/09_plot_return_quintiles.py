@@ -55,7 +55,7 @@ def main():
     ax.spines[["top", "right"]].set_visible(False)
     ax.legend(loc="lower left", frameon=False, fontsize=10)
     fig.text(.12, .035, f"Unadjusted group medians; {table.n.min()}-{table.n.max()} filings per group. Connected points do not imply a fitted trend.\n"
-             "Higher-tone groups have lower medians overall, but the five medians do not decrease monotonically.",
+             "Groups with more negative language have lower medians overall, but the five medians do not decrease monotonically.",
              fontsize=9, color="#52616d")
     fig.subplots_adjust(left=.12, right=.97, top=.81, bottom=.22)
     for extension in ["png", "svg"]:

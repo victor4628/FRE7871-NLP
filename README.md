@@ -3,10 +3,16 @@
 ## Completed analysis
 
 Start with [the executed notebook](assignment1.ipynb), containing six tables,
-Figure 1, all regression sensitivities and saved test output, and the six-page
+Figure 1, all regression sensitivities and saved test output, and the
 [English report](output/pdf/assignment1_report.pdf).
 [METHODOLOGY.md](METHODOLOGY.md) documents the specification;
 [AI_USE.md](AI_USE.md) discloses assistance and authorship.
+
+[ANALYSIS_CHOICES.md](ANALYSIS_CHOICES.md) separates the brief's explicit
+requirements from implementation decisions, student-requested comparisons,
+extra statistical checks and withdrawn choices. The report includes a disclosure
+appendix and plain-language table guide. "Score" means the named uncertainty or
+negative-language measure; it is not a separate statistical test.
 
 The 2021-2025 text sample contains 1,624 reports; volatility and return models
 use 1,591 and 1,592 respectively. Low-priced stocks are retained. Annual-report negative language increases

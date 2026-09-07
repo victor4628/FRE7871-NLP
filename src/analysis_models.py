@@ -42,7 +42,7 @@ def clustered_fit(formula, data, two_way=False):
     rank = int((np.abs(np.diag(r)) > tol).sum())
     selected = sorted(pivot[:rank])
     dropped = [n for i,n in enumerate(model.exog_names) if i not in selected]
-    if any(n in dropped for n in ["time","tone_z"]):
+    if any(n in dropped for n in ["time","score_z"]):
         raise ValueError("Target coefficient is not identified by this design")
     if dropped:
         model = sm.OLS(pd.Series(model.endog,index=data.index),
@@ -134,9 +134,9 @@ def outcome_models(sample, counts, vocabulary, outcome, variant="pooled", firm_e
     for weight in ["prop", "tfidf"]:
         tone = category+"_"+weight
         data = scored.copy()
-        data["tone_z"] = standardize(data[tone])
+        data["score_z"] = standardize(data[tone])
         for control_set, with_size, with_pre in settings:
-            formula = outcome_name + " ~ tone_z"
+            formula = outcome_name + " ~ score_z"
             if with_size:
                 formula += " + log_market_value"
             if with_pre:
@@ -152,9 +152,9 @@ def outcome_models(sample, counts, vocabulary, outcome, variant="pooled", firm_e
                    "pre_vol_control": with_pre, "firm_effects": firm_effects,
                    "formula": formula,
                    "two_way_cluster": two_way, "benchmark": benchmark,
-                   **result_row(result, "tone_z"), "firms": data.cik.nunique(),
+                   **result_row(result, "score_z"), "firms": data.cik.nunique(),
                    "quarters": data.quarter.nunique(), "corpus": corpus_id(data),
-                   "tone_sd": float(data[tone].std(ddof=1))}
+                   "score_sd": float(data[tone].std(ddof=1))}
             df = min(data.cik.nunique(), data.quarter.nunique())-1 if two_way else data.cik.nunique()-1
             row["mde80"] = float((t.ppf(.975,df)+norm.ppf(.8))*row["se"])
             rows.append(row)
