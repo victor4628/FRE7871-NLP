@@ -19,3 +19,5 @@ outputs/*
 # Instructor-built data archive, distributed as a GitHub Release asset
 ark_filings_*.tar.gz
 download.log
+.pytest_cache/
+output/pdf/qa/

@@ -1,76 +1,28 @@
 # Assignment 1 report
 
-### Uncertainty and Sentiment Analysis of Quarterly and Annual Financial Reports
+**Author:** Yuanpeng Chen
+**NetID:** yc8027
+**Repository:** https://github.com/victor4628/FRE7871-NLP
 
-FRE-GY 7871 A · NLP and the Investment Process
+The completed six-page English report is
+[assignment1_report.pdf](output/pdf/assignment1_report.pdf). It contains the
+sample waterfall, parsing and timing decisions, equation (1), six tables,
+Figure 1, inference and robustness checks, test-specific conclusions, and
+limitations of the frozen holdings sample. See [assignment1.ipynb](assignment1.ipynb)
+for the executed analysis and [AI_USE.md](AI_USE.md) for authorship disclosure.
 
-**Name:**
-**NetID:**
-**GitHub repo:**
+The text sample contains 1,628 unique reports from 91 issuers. Annual-report
+negative language increases under both weighting schemes. Controlling for
+existing volatility reduces the pooled uncertainty coefficients by 43.9% and
+53.2%; issuer fixed effects remove that positive association. Negative-language
+coefficients in the four-day excess-return regressions are negative but
+imprecise. These findings do not establish an out-of-sample forecasting strategy.
 
-Export to PDF and upload to Brightspace. Keep it short. Prose over bullet points where a sentence will
-do; the writing is graded alongside the code.
+Regenerate the PDF from the computed tables using:
 
----
+```powershell
+& .venv/Scripts/python.exe scripts/08_build_report.py --author "Yuanpeng Chen" --netid yc8027
+```
 
-## 1. What I did
-
-The question, the corpus, and the measure, in one short paragraph. A reader who
-has not seen the assignment should understand what was tested.
-
-## 2. Data construction
-
-Universe, sample window, forms, and every filter, with **Table 1** (the waterfall).
-State the parsing decisions you made and what they cost: table-stripping threshold,
-tokenisation, how many filings failed to parse, how many lost a share count.
-
-State how you handled point-in-time: the day-0 rule, how many filings it moved,
-and where your share counts came from.
-
-## 3. Word lists
-
-Size of each list and the overlap between them. What that overlap implies for how
-independent your two measures really are.
-
-## 4. Method
-
-The two weighting schemes, with equation (1) written out and your reading of the
-ambiguous terms. How you aggregated to quarters and what you did about form mix and
-firm mix. The regression specifications and the standard errors, with a sentence each
-on why you clustered the way you did and why the aggregate trend test needs
-Newey-West.
-
-## 5. What the measures are made of
-
-**Table 2** summary statistics, 10-K and 10-Q separately, with the correlation between
-the two measures. **Table 3** the thirty most frequent words on each list. Answer Q1
-and Q2 here.
-
-## 6. Trends, 2021-2025
-
-**Figure 1** and **Table 4**. State the composition corrections you applied before
-describing anything. Give the aggregate trend with both OLS and Newey-West
-t-statistics, and lead with the within-firm result. Answer Q3, including which of the
-two readings of the trend your own evidence supports.
-
-## 7. Uncertainty, volatility and returns
-
-**Table 5**, reported both with and without the pre-filing volatility control, and the
-difference explained. Then **Table 6**, the return test, with the power arithmetic
-stated before you interpret it. Answer Q4 and Q6.
-
-## 8. 10-K versus 10-Q
-
-What differs between the two form types, and whether your trend and volatility
-results differ with it. Answer Q5.
-
-## 9. Limitations
-
-Survivorship, with a number, including the sharper version of it for the trend work:
-survivors are the firms that did not blow up. Twenty quarters is a short series.
-Benchmark choice. And every specification you ran, not only the one you are reporting.
-
-## 10. What I would do next
-
-Two or three sentences. What is the single change that would most improve this
-test, and what would it cost?
+The PDF is the Brightspace report deliverable. Generated data and intermediate
+tables are excluded from Git; the notebook preserves the reported outputs.

@@ -1,5 +1,29 @@
 # Assignment 1: Uncertainty and Sentiment Analysis of Quarterly and Annual Financial Reports
 
+## Completed analysis
+
+Start with [the executed notebook](assignment1.ipynb), containing six tables,
+Figure 1, all regression sensitivities and saved test output, and the six-page
+[English report](output/pdf/assignment1_report.pdf).
+[METHODOLOGY.md](METHODOLOGY.md) documents the specification;
+[AI_USE.md](AI_USE.md) discloses assistance and authorship.
+
+The 2021-2025 text sample contains 1,628 reports; volatility and return models
+use 1,513 and 1,514 respectively. Annual-report negative language increases
+within issuers. The pooled uncertainty association weakens with prior volatility
+and disappears with issuer effects; four-day return estimates are imprecise.
+
+For reproduction, follow [RUNNING_zh.md](RUNNING_zh.md). Run acquisition scripts
+00-03, audit 04, price/actions download 05, then `scripts/07_build_notebook.py`
+(which executes analysis 06). Build the report with
+`scripts/08_build_report.py --author "Your Name" --netid your_netid`.
+Generated data stay local; only the instructor's frozen snapshot is versioned.
+Future SEC/Yahoo downloads may change. `requirements-lock.txt` records the
+Windows environment. The original instructor README follows; its remarks about
+missing analysis, notebooks and tests describe the starter repository.
+
+---
+
 FRE-GY 7871 A · NLP and the Investment Process · Fall 2026
 Out: Session 1 (5 Sep 2026) · Due: 9:00 AM, Session 2 (12 Sep 2026)
 
