@@ -48,7 +48,7 @@ def show_table(frame):
               'uncertainty_prop':'Uncertainty-word proportion','uncertainty_tfidf':'Uncertainty TF-IDF',
               'without_pre_volatility':'Without prior volatility',
               'with_pre_volatility':'With prior volatility','with_controls':'With controls',
-              'score_z':'Language score (+1 standard deviation)',
+              'score_z':'Language score (standardized internally)',
               'log_market_value':'Company size (log market value)','log_pre_vol':'Prior volatility (log)',
               'log_dollar_volume':'Average dollar volume (log)',
               'prior_excess_return':'Prior SPY excess return'}
@@ -100,13 +100,15 @@ def show_table(frame):
     md('## Table 5 — Uncertainty and next-quarter volatility\nThe outcome is log annualized volatility on [+4,+63]; '
        'pre-volatility uses [-60,-6]. Both models include log size, log average dollar volume, prior SPY excess return, '
        'a 10-K indicator, company effects and calendar-quarter effects. The second adds log prior volatility. '
-       'The score is standardized within the same complete-case corpus. This remains continuous: '
-       'z = (score - mean)/SD. Standardization changes coefficient units, not fitted values or t-statistics.')
-    code("t5=pd.read_csv(RESULTS/'table5.csv')\nshow_table(t5[['measure','control_set','formula','beta','se','t','p','ci_low','ci_high','n','firms','corpus']])\nassert t5.groupby('measure').corpus.nunique().eq(1).all()\nc=pd.read_csv(RESULTS/'all_regression_coefficients.csv')\nshow_table(c.loc[c.model.isin(t5.model)])")
+       'Both language measures remain continuous. Reported proportional coefficients are per 1 percentage-point increase; '
+       'reported TF-IDF coefficients are per 1 unit. Internal standardization is rescaled back to these units and does not '
+       'change fitted values, t-statistics or p-values.')
+    code("t5=pd.read_csv(RESULTS/'table5.csv')\nt5['Reported unit']=t5.measure.map(lambda x:'per 1 percentage point' if x.endswith('_prop') else 'per 1 TF-IDF unit')\nt5['unit_scale']=t5.apply(lambda r:.01/r.score_sd if r.measure.endswith('_prop') else 1/r.score_sd,axis=1)\nfor col in ['beta','se','ci_low','ci_high']:\n    t5[col]=t5[col]*t5.unit_scale\nshow_table(t5[['measure','Reported unit','control_set','formula','beta','se','t','p','ci_low','ci_high','n','firms','corpus']])\nassert t5.groupby('measure').corpus.nunique().eq(1).all()\nc=pd.read_csv(RESULTS/'all_regression_coefficients.csv')")
     md('## Table 6 — Sentiment and filing-period excess returns\nThe outcome is stock minus SPY buy-and-hold return '
-       'over [0,+3], in percentage points. The model includes the full required control and fixed-effect set. The minimum '
+       'over [0,+3], in percentage points. Proportion coefficients are per 1 percentage-point increase and TF-IDF '
+       'coefficients per 1 unit. The model includes the full required control and fixed-effect set. The minimum '
        'detectable effect is an approximate 80%-power precision diagnostic, not observed power.')
-    code("t6=pd.read_csv(RESULTS/'table6.csv')\nshow_table(t6[['measure','control_set','formula','beta','se','t','p','ci_low','ci_high','mde80','n','firms']])\nshow_table(c.loc[c.model.isin(t6.model)])")
+    code("t6=pd.read_csv(RESULTS/'table6.csv')\nt6['Reported unit']=t6.measure.map(lambda x:'per 1 percentage point' if x.endswith('_prop') else 'per 1 TF-IDF unit')\nt6['unit_scale']=t6.apply(lambda r:.01/r.score_sd if r.measure.endswith('_prop') else 1/r.score_sd,axis=1)\nfor col in ['beta','se','ci_low','ci_high','mde80']:\n    t6[col]=t6[col]*t6.unit_scale\nshow_table(t6[['measure','Reported unit','control_set','formula','beta','se','t','p','ci_low','ci_high','mde80','n','firms']])")
     md('## Form and benchmark checks\nTable 5 is re-estimated separately for 10-K and 10-Q samples, with sample-specific IDF. '
        'The return model is also estimated against ARKK to disclose benchmark sensitivity.')
     code("models=pd.read_csv(RESULTS/'all_outcome_models.csv')\nshow_table(models[['outcome','variant','measure','control_set','formula','beta','se','p','n','corpus']])")
@@ -122,7 +124,7 @@ def show_table(frame):
        'a held-out forecasting evaluation.\n\n'
        'See the short PDF report for the test-by-test discussion and `AI_USE.md` for the authorship disclosure.')
     md('## Plain-language table guide\nA score is the measured amount of uncertainty or negative language. '
-       'One standard deviation is a common scale for comparing coefficients. A score p-value tests a zero '
+       'Outcome tables report proportions per 1 percentage point and TF-IDF per 1 unit. A score p-value tests a zero '
        'score coefficient. Parentheses in the PDF contain company-clustered standard errors. '
        'Log means natural logarithm. P25/P75 are percentiles. Internal variable `score_z` means the '
        'standardized language score named by that model. The intercept is its fitted baseline.')

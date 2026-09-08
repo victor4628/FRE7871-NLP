@@ -60,12 +60,16 @@ ordinary and four-lag Newey-West t-statistics. Preferred trends add issuer
 effects and use issuer-clustered standard errors. Proportional slopes are
 percentage points per year; TF-IDF slopes are term-weight units per year.
 
-Table 5 regresses log subsequent volatility on standardized Uncertainty. Both
+Table 5 regresses log subsequent volatility on continuous Uncertainty. Both
 columns include log size, log average dollar volume, prior SPY excess return, a
 10-K indicator, issuer effects and calendar-quarter effects; the second adds log
 prior volatility. Table 5 is also run separately by form. Table 6 regresses the
-four-day excess return on standardized Negative with the full control and fixed
-effect set. Outcome standard errors cluster by issuer. The ARKK return benchmark
+four-day excess return on continuous Negative with the full control and fixed
+effect set. The code standardizes language scores internally, but reported
+proportional-score coefficients and standard errors are rescaled to a 1
+percentage-point increase; TF-IDF results are rescaled to a 1-unit increase.
+This reporting conversion does not change fitted values, t-statistics or
+p-values. Outcome standard errors cluster by issuer. The ARKK return benchmark
 is the only additional outcome specification.
 
 The return table reports an approximate 80%-power minimum detectable effect as
@@ -75,8 +79,9 @@ not observed power. All estimates are retrospective associations.
 ## Report evidence and interpretation
 
 The report uses the instructor's sections 1-10, with the question answers at the
-specified locations. Outcome scores remain continuous after standardization:
-`z = (score - mean) / SD`; no grouping or discretization is applied. The model's
+specified locations. Outcome scores remain continuous. Proportional results are
+reported per 1 percentage point and TF-IDF results per 1 unit; no grouping or
+discretization is applied. The model's
 10-Q indicator with a 10-K reference is equivalent to the required 10-K indicator
 with the intercept reparameterized. Prior volatility enters in natural logs.
 

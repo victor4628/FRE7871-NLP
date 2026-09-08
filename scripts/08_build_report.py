@@ -125,9 +125,10 @@ def build(author, netid):
           'series remove the seasonal form-mix problem. Aggregate regressions use time and quarter-of-year effects; '
           'Newey-West standard errors with four lags allow serial correlation. The within-company model adds company '
           'effects, comparing changes inside the same company. Company-clustered errors allow its repeated filings to be related.'),
-        P('For market outcomes, <b>z = (language score - sample mean) / sample SD</b> is a continuous regressor. '
-          'A coefficient per one standard deviation (SD) is a change of units, not a high/low grouping; using the raw '
-          'score gives identical fitted values and t-statistics. Table 5 uses uncertainty z; Table 6 uses negative-language z.'),
+        P('For market outcomes, each language measure enters as a continuous regressor. Reported proportional-score '
+          'coefficients are effects per 1 percentage-point increase in words (for example, 1.8% to 2.8%); reported TF-IDF '
+          'coefficients are effects per 1 TF-IDF unit. The estimation code standardizes scores internally, then rescales '
+          'the coefficients and standard errors to these original units. This does not change fitted values, t-statistics or p-values.'),
         P('Both models include log size (day -1 price times filing shares), log mean daily dollar volume and stock-minus-SPY '
           'buy-and-hold return over [-60,-6], report type, company effects and calendar-quarter effects. Table 5 adds '
           'log prior volatility only in its second specification; Table 6 includes it. The code uses a 10-Q dummy with '
@@ -197,8 +198,8 @@ def build(author, netid):
           'more pessimistic or uncertain.'),
         PageBreak(), P("7. Uncertainty, volatility and returns","Section"),
         P("Table 5. Does uncertainty predict subsequent volatility?","Section"),
-        P('Dependent variable: log annualized volatility on [+4,+63]. Main independent variable: continuous standardized '
-          'uncertainty, computed separately as proportion or TF-IDF. Columns A/B differ only by prior volatility. '
+        P('Dependent variable: log annualized volatility on [+4,+63]. Main independent variable: continuous uncertainty, '
+          'computed separately as proportion or TF-IDF. Columns A/B differ only by prior volatility. '
           'All columns include size, dollar volume, prior excess return, report type, company and calendar-quarter effects.','Note')]
     selected = [vol.loc[(m,c)] for m in ["uncertainty_prop","uncertainty_tfidf"]
                 for c in ["without_pre_volatility","with_pre_volatility"]]
@@ -208,38 +209,50 @@ def build(author, netid):
             found=coefficients.loc[coefficients.model.eq(model.model)&coefficients.term.eq(term)]
             values.append("-" if found.empty else f"{found.iloc[0].beta:.4f}<br/>({found.iloc[0].se:.4f})")
         return values
-    rows=[["Uncertainty (per 1 SD)"]+coefficient_cells("score_z"),
+    def reported_scale(model):
+        measure = model["measure"] if "measure" in model.index else model.name
+        if isinstance(measure, tuple):
+            measure = measure[0]
+        return .01/model.score_sd if measure.endswith("_prop") else 1/model.score_sd
+    def score_cells(models_to_show):
+        return [f"{r.beta*reported_scale(r):.4f}<br/>({r.se*reported_scale(r):.4f})" for r in models_to_show]
+    rows=[["Uncertainty coefficient (SE)"]+score_cells(selected),
           ["Prior volatility (log)"]+coefficient_cells("log_pre_vol"),
           ["Score p-value"]+[pv(r.p) for r in selected],
           ["Filings / companies"]+[f"{r.n:,} / {r.firms}" for r in selected]]
-    story.append(tab(["Variable / statistic","Proportion A","Proportion B","TF-IDF A","TF-IDF B"],rows,
+    story.append(tab(["Variable / statistic","Proportion (+1 pp) A","Proportion (+1 pp) B",
+                      "TF-IDF (+1 unit) A","TF-IDF (+1 unit) B"],rows,
                      [167,87,87,87,87]))
     story.append(P('A: without prior volatility; B: with prior volatility. Parentheses are company-clustered standard errors. '
-                   'SD is the standard deviation of the continuous language score. For proportional uncertainty, '
-                   f'1 SD = {100*selected[0].score_sd:.3f} percentage points of words.','Note'))
+                   'pp means percentage point of all words. TF-IDF coefficients are per one term-weight unit.','Note'))
     a,b,c,d=selected
-    story.append(P(f'<b>Q4.</b> Adding prior volatility changes the proportional coefficient from {a.beta:.4f} to '
-        f'{b.beta:.4f}, and TF-IDF from {c.beta:.4f} to {d.beta:.4f}. The declines are '
+    ar,br,cr,dr=[r.beta*reported_scale(r) for r in selected]
+    story.append(P(f'<b>Q4.</b> Adding prior volatility changes the proportional coefficient from {ar:.4f} to '
+        f'{br:.4f} log points per percentage point, and TF-IDF from {cr:.4f} to {dr:.4f} log points per unit. The declines are '
         f'{100*(1-b.beta/a.beta):.1f}% and {100*(1-d.beta/c.beta):.1f}%, respectively. The added control accounts for '
         'pre-existing volatility correlated with the language score. Both earlier estimates were already imprecise '
         'with the other controls and fixed effects; neither controlled estimate establishes additional predictive content.'))
     story += [P("Table 6. Does negative language predict four-day excess returns?","Section"),
               P('Dependent variable: stock-minus-SPY buy-and-hold return on [0,+3], in percentage points. Main '
-                'independent variable: continuous standardized Negative proportion or Negative TF-IDF. All Table 5 '
-                'controls and log prior volatility are included. Coefficients are return percentage points per 1 SD '
-                'increase in the named negative-language measure.','Note')]
+                'independent variable: continuous Negative proportion or Negative TF-IDF. All Table 5 controls and log prior '
+                'volatility are included. Proportion effects are per 1 percentage-point increase; TF-IDF effects are per 1 unit.','Note')]
     story.append(tab(["Negative-language predictor","Coefficient (SE)","t","p","80% MDE"],
-        [[labels[r.measure],f"{r.beta:.3f} ({r.se:.3f})",f"{r.t:.2f}",pv(r.p),f"{r.mde80:.2f} pp"] for _,r in t6.iterrows()],
+        [[labels[r.measure]+(" (+1 pp)" if r.measure.endswith("_prop") else " (+1 unit)"),
+          f"{r.beta*reported_scale(r):.3f} ({r.se*reported_scale(r):.3f})",f"{r.t:.2f}",pv(r.p),
+          f"{r.mde80*reported_scale(r):.3f} pp"] for _,r in t6.iterrows()],
         [184,113,50,59,109]))
     r1,r2=ret.loc["negative_prop"],ret.loc["negative_tfidf"]
     story += [P(f'N={r1.n:,} filings and {r1.firms} company clusters. Approximate 80%-power minimum detectable effect '
-        f'(MDE) = (t critical at 5%, two-sided + 0.842) x clustered SE: {r1.mde80:.2f} and {r2.mde80:.2f} '
-        'percentage points per SD. These are precision diagnostics for detecting effects, not measured test power.','Note'),
+        f'(MDE) = (t critical at 5%, two-sided + 0.842) x clustered SE: '
+        f'{r1.mde80*reported_scale(r1):.3f} return percentage points per 1 proportion point and '
+        f'{r2.mde80*reported_scale(r2):.3f} return percentage points per TF-IDF unit. '
+        'These are precision diagnostics for detecting effects, not measured test power.','Note'),
         P('<b>Q6. Which results do I believe?</b> Annual Negative trends are most convincing: both weights agree '
           'within companies. Uncertainty trends are less uniform: annual proportions and TF-IDF disagree, while the '
           'quarterly proportional decline is borderline. Aggregate t-statistics alone are weaker evidence with only 20 quarters. '
           'For volatility, the pooled controlled effects are near zero or small, with 95% intervals of '
-          f'[{b.ci_low:.3f}, {b.ci_high:.3f}] and [{d.ci_low:.3f}, {d.ci_high:.3f}] log points. This limits '
+          f'[{b.ci_low*reported_scale(b):.3f}, {b.ci_high*reported_scale(b):.3f}] log points per proportion point and '
+          f'[{d.ci_low*reported_scale(d):.3f}, {d.ci_high*reported_scale(d):.3f}] per TF-IDF unit. This limits '
           'large pooled effects but leaves small effects possible. The form-specific annual TF-IDF finding in section 8 '
           'is suggestive, not broad confirmation. Return estimates are negative but their intervals include zero; '
           'the MDEs explain why this test cannot rule out modest effects. A blanket claim that every test lacked power is unwarranted.'),
@@ -247,15 +260,16 @@ def build(author, netid):
         P("Table 5 by form. Uncertainty predicting log subsequent volatility","Note"),
         P('Every row uses uncertainty words; "weighting" specifies proportion versus TF-IDF. Both columns include '
           'size, dollar volume, prior return, company and calendar-quarter effects; B adds log prior volatility. '
-          'Report type is constant within each sample. Each coefficient is per one SD of that form-specific '
-          'continuous uncertainty score; IDF is recomputed within form.','Note')]
+          'Report type is constant within each sample. Proportion coefficients are per 1 percentage point and TF-IDF '
+          'coefficients per 1 unit; IDF is recomputed within form.','Note')]
     rows=[]
     for form in ["10-K","10-Q"]:
         for measure in ["uncertainty_prop","uncertainty_tfidf"]:
             sample=models.loc[models.outcome.eq("volatility")&models.variant.eq(form)&models.measure.eq(measure)].set_index("control_set")
             va,vb=sample.loc["without_pre_volatility"],sample.loc["with_pre_volatility"]
             rows.append([form,"Proportion" if measure.endswith("prop") else "TF-IDF",
-                         f"{va.beta:.3f} / {pv(va.p)}",f"{vb.beta:.3f} / {pv(vb.p)}",f"{vb.n:,}"])
+                         f"{va.beta*reported_scale(va):.3f} / {pv(va.p)}",
+                         f"{vb.beta*reported_scale(vb):.3f} / {pv(vb.p)}",f"{vb.n:,}"])
     story.append(tab(["Form","Uncertainty weighting","A: coefficient / p","B: coefficient / p","N"],rows,[43,139,135,135,63]))
     fk,fq=e["forms"]["10-K"],e["forms"]["10-Q"]
     story += [
@@ -276,14 +290,15 @@ def build(author, netid):
         P("9. Limitations","Section")]
     years=core.groupby("cik").filing_date.apply(lambda x:pd.to_datetime(x).dt.year.nunique())
     arkk=models.loc[models.outcome.eq("return")&models.variant.eq("ARKK")].set_index("measure")
+    arkk_prop,arkk_tfidf=arkk.loc["negative_prop"],arkk.loc["negative_tfidf"]
     story += [P(f'The 2026 holdings snapshot selects survivors; failed or exited former holdings are missing, '
         f'and only {int(years.eq(5).sum())}/{s["core_firms"]} retained issuers appear in every filing year. Thus '
         'trends among survivors need not describe the original population. The 20-quarter aggregate series, '
         'retrospective IDF, daily event timing and multi-class size proxy also limit inference.'),
         P('All current model variants are reported: aggregate/within-company trends, paired pooled and form-specific '
           'volatility models, pooled SPY returns, and the ARKK return benchmark. With ARKK, Negative coefficients are '
-          f'{arkk.loc["negative_prop","beta"]:.3f} (p={pv(arkk.loc["negative_prop","p"])}) and '
-          f'{arkk.loc["negative_tfidf","beta"]:.3f} (p={pv(arkk.loc["negative_tfidf","p"])}); the imprecise pooled '
+          f'{arkk_prop.beta*reported_scale(arkk_prop):.3f} per proportion point (p={pv(arkk_prop.p)}) and '
+          f'{arkk_tfidf.beta*reported_scale(arkk_tfidf):.3f} per TF-IDF unit (p={pv(arkk_tfidf.p)}); the imprecise pooled '
           'return conclusion persists. The PayPal repetition check is one case, not a corpus-wide duplication estimate.'),
         P("10. What I would do next","Section"),
         P('The most valuable next step is reconstructing historical ARK membership, including firms later dropped or '

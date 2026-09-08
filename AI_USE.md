@@ -2,6 +2,12 @@
 
 **Tool used:** OpenAI Codex.
 
+The September 8 unit revision keeps both proportional and TF-IDF measures in the
+main tables. It rescales outcome coefficients and standard errors from the
+internally standardized regressors to effects per 1 percentage-point increase
+in the language proportion or per 1 TF-IDF unit. This changes presentation only; fitted values, t-statistics
+and p-values are unchanged.
+
 The September 8 revision reorganizes the report into the instructor's ten sections,
 enlarges the black body text, explains all variables and continuous score scaling,
 and replaces an unsupported boilerplate interpretation with a reproducible PayPal
