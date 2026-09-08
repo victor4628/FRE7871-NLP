@@ -12,11 +12,13 @@ from src.analysis_data import shell_status
 def test_event_day_handles_early_close_and_utc():
     schedule = pd.DataFrame({"close": pd.to_datetime([
         "2021-11-24T21:00Z", "2021-11-26T18:00Z", "2021-11-29T21:00Z"
-    ])})
+    ])}, index=pd.to_datetime(["2021-11-24", "2021-11-26", "2021-11-29"]))
     assert event_position("2021-11-26T17:59:59Z", schedule) == 1
-    assert event_position("2021-11-26T18:00:00Z", schedule) == 2
+    assert event_position("2021-11-26T18:00:00Z", schedule) == 1
+    assert event_position("2021-11-26T21:00:00Z", schedule) == 2
     assert event_position("2021-11-27T12:00:00Z", schedule) == 2
     assert event_position("2021-11-25T10:00:00Z", schedule) == 1
+    assert event_position("2021-11-24T15:00:00Z", schedule, "2021-11-26") == 1
     with pytest.raises(ValueError):
         event_position("2021-11-26", schedule)
 
@@ -35,8 +37,8 @@ def test_nominal_units_exclude_split_on_current_day():
 def test_compounding_and_missing_are_not_sum_or_zero():
     assert buy_hold([.1, -.1]) == pytest.approx(-.01)
     assert np.isnan(buy_hold([.1, np.nan]))
-    assert np.isnan(annual_vol(np.zeros(62)))
-    assert annual_vol(np.arange(63)/1000) == pytest.approx(np.std(np.arange(63)/1000, ddof=1)*np.sqrt(252))
+    assert np.isnan(annual_vol(np.zeros(59), 60))
+    assert annual_vol(np.arange(60)/1000, 60) == pytest.approx(np.std(np.arange(60)/1000, ddof=1)*np.sqrt(252))
 
 
 def test_visible_inline_text_survives_hidden_xbrl_does_not():
@@ -97,3 +99,16 @@ def test_tfidf_matches_hand_calculation_and_changes_with_corpus(monkeypatch):
     assert scored.uncertainty_tfidf.eq(0).all()
     # The restricted corpus must recompute df/N, not reuse the full-sample IDF.
     assert score_corpus(meta.iloc[:1], matrix, ["LOSS","MAY"]).negative_tfidf.iloc[0] == 0
+
+
+def test_assignment_tfidf_self_check(monkeypatch):
+    import src.analysis_data as module
+    master = pd.DataFrame({"Word": ["LOSS", "RISK", "GAIN"],
+                           "Negative": [2011, 2011, 0], "Uncertainty": [0, 0, 0]})
+    monkeypatch.setattr(module, "load_master_dictionary", lambda: master)
+    meta = pd.DataFrame({"accession": ["d1", "d2", "d3"], "text_row": [0, 1, 2],
+                         "analysis_words": [4, 3, 4], "analysis_distinct": [3, 2, 2]})
+    matrix = np.array([[2, 1, 1], [1, 0, 2], [0, 3, 1]])
+    scored = score_corpus(meta, matrix, ["LOSS", "RISK", "GAIN"])
+    assert scored.negative_prop.tolist() == pytest.approx([.75, 1/3, .75])
+    assert scored.negative_tfidf.tolist() == pytest.approx([.8480, .2885, .5026], abs=5e-5)

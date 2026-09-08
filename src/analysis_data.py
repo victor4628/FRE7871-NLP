@@ -248,13 +248,18 @@ def nominal_market_data(close, volume, splits):
     return close * future, volume.reindex_like(close) / future, ratios
 
 
-def event_position(acceptance, schedule):
+def event_position(acceptance, schedule, filing_date=None):
+    """Return day 0 under the assignment's fixed 16:00 Eastern cutoff."""
     ts = pd.Timestamp(acceptance)
     if ts.tzinfo is None:
         raise ValueError("Acceptance timestamp must be timezone aware")
-    ts = ts.tz_convert("UTC")
-    # Strict comparison handles a release exactly at close conservatively.
-    return int(schedule["close"].searchsorted(ts, side="right"))
+    local = ts.tz_convert("America/New_York")
+    eligible = local.tz_localize(None).normalize()
+    if local.hour >= 16:
+        eligible += pd.Timedelta(days=1)
+    if filing_date is not None:
+        eligible = max(eligible, pd.Timestamp(filing_date).normalize())
+    return int(schedule.index.searchsorted(eligible, side="left"))
 
 
 def buy_hold(values):
@@ -262,9 +267,10 @@ def buy_hold(values):
     return float(np.prod(1+x)-1) if len(x) and np.isfinite(x).all() else np.nan
 
 
-def annual_vol(values):
+def annual_vol(values, expected_length):
     x = np.asarray(values, dtype=float)
-    return float(np.std(x, ddof=1)*np.sqrt(252)) if len(x) == 63 and np.isfinite(x).all() else np.nan
+    return (float(np.std(x, ddof=1)*np.sqrt(252))
+            if len(x) == expected_length and np.isfinite(x).all() else np.nan)
 
 
 def build_market_features(meta):
@@ -284,17 +290,22 @@ def build_market_features(meta):
     supplied = pd.read_csv(PRICE_DIR / "shares.csv", dtype={"cik": str, "accession": str}).set_index("accession")
     rows = []
     for row in meta.itertuples():
-        j = event_position(row.acceptance_datetime, schedule)
+        j = event_position(row.acceptance_datetime, schedule, row.filing_date)
         if j < 64 or j+66 >= len(sessions):
             raise ValueError("Calendar range does not cover requested windows")
         day = sessions[j]
         ticker = row.ticker
         stock = returns[ticker]
-        pre = stock.iloc[j-63:j]
-        post = stock.iloc[j+4:j+67]
+        pre_history = stock.iloc[j-60:j]
+        pre = stock.iloc[j-60:j-5]
+        post = stock.iloc[j+4:j+64]
         event = stock.iloc[j:j+4]
-        pre_vol, post_vol = annual_vol(pre), annual_vol(post)
+        pre_vol, post_vol = annual_vol(pre, 55), annual_vol(post, 60)
         stock_event = buy_hold(event)
+        prior_excess_return = 100*(buy_hold(pre)-buy_hold(returns.SPY.iloc[j-60:j-5]))
+        dollar_values = (nominal[ticker].iloc[j-60:j-5]
+                         * actual_volume[ticker].iloc[j-60:j-5])
+        dollar_volume = dollar_values.mean() if np.isfinite(dollar_values).sum() == 55 else np.nan
         shares, asof, source = row.cover_shares, pd.to_datetime(row.cover_shares_date), row.cover_shares_source
         if not np.isfinite(shares) and row.accession in supplied.index:
             f = supplied.loc[row.accession]
@@ -322,13 +333,18 @@ def build_market_features(meta):
             "quarter_of_year": q.quarter, "time": (q.year-2021)*4+q.quarter-1,
             "industry": str(int(row.sic)//100) if pd.notna(row.sic) else "unknown",
             "pre_vol": pre_vol, "post_vol": post_vol,
+            "pre_return_count": int(np.isfinite(pre_history).sum()),
+            "post_return_count": int(np.isfinite(post).sum()),
+            "prior_excess_return": prior_excess_return,
+            "dollar_volume": dollar_volume,
+            "dollar_volume_count": int(np.isfinite(dollar_values).sum()),
             "excess_return": 100*(stock_event-buy_hold(returns.SPY.iloc[j:j+4])),
             "excess_return_arkk": 100*(stock_event-buy_hold(returns.ARKK.iloc[j:j+4])),
             "prior_price": prior_price, "market_value": size,
             "shares_used": shares, "shares_date": asof, "shares_source": source,
         })
     out = meta.merge(pd.DataFrame(rows), on="accession", validate="one_to_one")
-    for c in ["pre_vol", "post_vol", "market_value"]:
+    for c in ["pre_vol", "post_vol", "market_value", "dollar_volume"]:
         out["log_"+c] = np.log(out[c].where(out[c] > 0))
     out.to_csv(ANALYSIS / "filing_features.csv", index=False)
     return out

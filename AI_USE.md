@@ -9,6 +9,11 @@ the uncertainty coefficient after adding size using the omitted-variable
 coefficient identity on the common sample; this explanation does not change the
 regression specification or results.
 
+On September 7 the TA updated the instructor repository with the exact Q1-Q6,
+sample filters, event windows, controls and TF-IDF self-check. Codex fetched that
+revision, revised the analysis to match it, reran all results, and rewrote the
+notebook and six-page report around the numbered questions.
+
 **Scope of assistance:** Codex read and compared the assignment brief and reference
 paper, imported the instructor's repository, configured the environment, ran the
 downloads, and generated the added analysis code, numerical tests, executed
@@ -39,6 +44,13 @@ removed the earlier prior-return and turnover calculations and primary fixed
 effects. The additional issuer/time-effects specification is reported separately
 as a sensitivity, not hidden inside the four primary models.
 
+Those user-directed specifications were later superseded by the September 7 TA
+update. The current submission applies the required $3 cutoff, form-specific word
+thresholds, earliest company-quarter filing rule, 60-day history rule,
+[-60,-6]/[+4,+63] volatility windows, and the full required controls and fixed
+effects. The older four-model design and shell-company exclusion are not used in
+the current results.
+
 The student also requested clearer terminology and an explicit inventory of work
 not specifically required by the assignment. Codex renamed reader-facing score
 and statistical labels, added a table guide and disclosure appendix, and wrote
@@ -63,10 +75,10 @@ font character. Both were corrected and cached cover metadata was refreshed.
 Codex also corrected an explanatory counting error: BMNR accounts for 16 missing
 pre-history filings, not the 17 previously stated in conversation.
 
-**Verification performed by Codex:** The acquisition audit, ten numerical and
+**Verification performed by Codex:** The acquisition audit, eleven numerical and
 timing tests, and the complete notebook were run locally. All report pages
 were rendered and visually inspected. Report values are read from computed
-tables. All estimated sensitivities are retained, including insignificant
-results and the disappearance of the pooled uncertainty association with issuer
-fixed effects. This is a retrospective analysis; its full-corpus scores and
+tables. The current pipeline retains the required form-specific volatility models
+and an ARKK benchmark check, including insignificant results. This is a
+retrospective analysis; its full-corpus scores and
 2026-selected universe do not support an out-of-sample trading claim.

@@ -52,7 +52,7 @@ def download_prices(
 
 def download_volume(tickers: list[str], start: str, end: str,
                     cache_path: Path | None = None) -> pd.DataFrame:
-    """Daily share volume, used for the turnover / liquidity control."""
+    """Daily share volume, used to construct the dollar-volume control."""
     import yfinance as yf
 
     cache_path = Path(cache_path or PRICE_DIR / "volume.csv")

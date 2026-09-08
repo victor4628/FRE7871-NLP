@@ -10,7 +10,6 @@ import statsmodels.formula.api as smf
 import statsmodels.api as sm
 from scipy.linalg import qr
 from scipy.stats import t, norm
-from statsmodels.stats.multitest import multipletests
 
 from .analysis_data import score_corpus
 
@@ -42,7 +41,7 @@ def clustered_fit(formula, data, two_way=False):
     rank = int((np.abs(np.diag(r)) > tol).sum())
     selected = sorted(pivot[:rank])
     dropped = [n for i,n in enumerate(model.exog_names) if i not in selected]
-    if any(n in dropped for n in ["time","score_z"]):
+    if any(n in dropped for n in ["time", "time_years", "score_z"]):
         raise ValueError("Target coefficient is not identified by this design")
     if dropped:
         model = sm.OLS(pd.Series(model.endog,index=data.index),
@@ -90,66 +89,66 @@ def trend_tests(core, counts, vocabulary):
         within_scores = score_corpus(within_sample, counts, vocabulary)
         within = within_scores.groupby(["cik", "quarter", "time", "quarter_of_year"], as_index=False)[TONES].mean()
         for tone in TONES:
+            unit = "percentage points per year" if tone.endswith("prop") else "TF-IDF units per year"
+            scale = 100 if tone.endswith("prop") else 1
             data = panel.copy()
-            data["y"] = standardize(data[tone])
-            aggregate = data.groupby(["quarter", "time", "quarter_of_year"], as_index=False).y.mean()
-            ols = smf.ols("y ~ time + C(quarter_of_year)", aggregate).fit()
-            hac = smf.ols("y ~ time + C(quarter_of_year)", aggregate).fit(
+            data["y"] = data[tone]*scale
+            data["time_years"] = data.time/4
+            aggregate = data.groupby(["quarter", "time_years", "quarter_of_year"], as_index=False).y.mean()
+            ols = smf.ols("y ~ time_years + C(quarter_of_year)", aggregate).fit()
+            hac = smf.ols("y ~ time_years + C(quarter_of_year)", aggregate).fit(
                 cov_type="HAC", cov_kwds={"maxlags": 4, "use_correction": True}, use_t=True
             )
             wd = within.copy()
-            wd["y"] = standardize(wd[tone])
-            firm = clustered_fit("y ~ time + C(cik) + C(quarter_of_year)", wd)
+            wd["y"] = wd[tone]*scale
+            wd["time_years"] = wd.time/4
+            firm = clustered_fit("y ~ time_years + C(cik) + C(quarter_of_year)", wd)
             mid = f"trend_{form}_{tone}"
             rows.append({"form": form, "measure": tone,
-                         "aggregate_beta": float(hac.params["time"]),
-                         "aggregate_ols_t": float(ols.tvalues["time"]),
-                         "aggregate_hac_t": float(hac.tvalues["time"]),
-                         "aggregate_hac_p": float(hac.pvalues["time"]),
+                         "unit": unit,
+                         "aggregate_beta": float(hac.params["time_years"]),
+                         "aggregate_ols_t": float(ols.tvalues["time_years"]),
+                         "aggregate_hac_t": float(hac.tvalues["time_years"]),
+                         "aggregate_hac_p": float(hac.pvalues["time_years"]),
                          "aggregate_n": len(aggregate),
-                         **{"within_"+k: v for k,v in result_row(firm,"time").items()},
+                         **{"within_"+k: v for k,v in result_row(firm,"time_years").items()},
                          "firms": wd.cik.nunique(), "corpus": corpus_id(within_sample),
                          "aggregate_corpus": corpus_id(sample),
                          "single_quarter_filing_exclusions": len(sample)-len(within_sample)})
             coefficients.extend([model_coefficients(hac, mid+"_aggregate_HAC"),
                                  model_coefficients(firm, mid+"_within_firm")])
     out = pd.DataFrame(rows)
-    for weight in ["prop", "tfidf"]:
-        mask = out.measure.str.endswith(weight)
-        out.loc[mask, "within_holm_p"] = multipletests(out.loc[mask,"within_p"], method="holm")[1]
     return out, pd.concat(coefficients, ignore_index=True)
 
 
-def outcome_models(sample, counts, vocabulary, outcome, variant="pooled", firm_effects=False,
+def outcome_models(sample, counts, vocabulary, outcome, variant="pooled",
                    two_way=False, active_only=False, benchmark="SPY"):
     scored = score_corpus(sample, counts, vocabulary, active_only=active_only)
     category = "uncertainty" if outcome == "volatility" else "negative"
     outcome_name = "log_post_vol" if outcome == "volatility" else (
         "excess_return" if benchmark == "SPY" else "excess_return_arkk")
-    settings = [("none", False, False), ("size", True, False),
-                ("volatility", False, True), ("both", True, True)]
-    if variant != "pooled":
+    settings = ([('without_pre_volatility', False), ('with_pre_volatility', True)]
+                if outcome == 'volatility' else [('with_controls', True)])
+    if variant not in {"pooled", "10-K", "10-Q"}:
         settings = settings[-1:]
     rows, coefficients = [], []
     for weight in ["prop", "tfidf"]:
         tone = category+"_"+weight
         data = scored.copy()
         data["score_z"] = standardize(data[tone])
-        for control_set, with_size, with_pre in settings:
-            formula = outcome_name + " ~ score_z"
-            if with_size:
-                formula += " + log_market_value"
+        for control_set, with_pre in settings:
+            formula = (outcome_name + " ~ score_z + log_market_value + log_dollar_volume"
+                       " + prior_excess_return")
             if with_pre:
                 formula += " + log_pre_vol"
-            if firm_effects:
-                formula += " + C(cik) + C(quarter)"
-                if data.form.nunique() > 1:
-                    formula += " + C(form)"
+            if data.form.nunique() > 1:
+                formula += " + C(form)"
+            formula += " + C(cik) + C(quarter)"
             result = clustered_fit(formula, data, two_way=two_way)
             model_id = f"{outcome}_{variant}_{tone}_{control_set}"
             row = {"model": model_id, "outcome": outcome, "variant": variant, "measure": tone,
-                   "control_set": control_set, "size_control": with_size,
-                   "pre_vol_control": with_pre, "firm_effects": firm_effects,
+                   "control_set": control_set, "size_control": True,
+                   "pre_vol_control": with_pre, "firm_effects": True,
                    "formula": formula,
                    "two_way_cluster": two_way, "benchmark": benchmark,
                    **result_row(result, "score_z"), "firms": data.cik.nunique(),
@@ -165,17 +164,13 @@ def outcome_models(sample, counts, vocabulary, outcome, variant="pooled", firm_e
 def all_outcome_models(vol_sample, return_sample, counts, vocabulary):
     rows, coefs = [], []
     for outcome, sample in [("volatility",vol_sample), ("return",return_sample)]:
-        specs = [("pooled",sample,{}),
-                 ("firm_FE",sample,{"firm_effects":True}),
-                 ("two_way",sample,{"two_way":True})]
-        specs.extend((form,sample.loc[sample.form.eq(form)],{}) for form in ["10-K","10-Q"])
-        if outcome == "return":
-            specs += [("ARKK",sample,{"benchmark":"ARKK"}),
-                      ("active_negative",sample,{"active_only":True})]
+        specs = [("pooled",sample,{})]
+        if outcome == "volatility":
+            specs.extend((form,sample.loc[sample.form.eq(form)],{}) for form in ["10-K","10-Q"])
+        else:
+            specs.append(("ARKK",sample,{"benchmark":"ARKK"}))
         for variant, data, options in specs:
             r,c = outcome_models(data,counts,vocabulary,outcome,variant,**options)
             rows.append(r); coefs.append(c)
     result = pd.concat(rows,ignore_index=True)
-    primary = result.variant.eq("pooled") & result.control_set.eq("both")
-    result.loc[primary,"holm_p"] = multipletests(result.loc[primary,"p"],method="holm")[1]
     return result, pd.concat(coefs,ignore_index=True)

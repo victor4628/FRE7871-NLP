@@ -13,12 +13,12 @@ requirements from implementation decisions and additional statistical checks.
 The report includes a plain-language table guide. "Score" means the named uncertainty or
 negative-language measure; it is not a separate statistical test.
 
-The 2021-2025 text sample contains 1,624 reports; volatility and return models
-use 1,591 and 1,592 respectively. Low-priced stocks are retained. Annual-report negative language increases
-within issuers. Tables 5-6 compare no controls, size only, prior volatility only,
-and both, on a common sample. The pooled uncertainty association weakens with
-prior volatility and disappears with added issuer/time effects; four-day return
-estimates are imprecise. Prior return and turnover are no longer calculated.
+The revised sample contains 1,536 reports from 91 issuers. It follows the TA's
+September 7 filters, including the $3 day -1 price threshold, 60-day history
+requirements and one earliest filing per company-quarter. Outcome models include
+the required size, dollar-volume, prior-return, report-type, company and quarter
+controls. Table 5 compares models without and with prior volatility on one sample;
+Table 6's pooled return estimates remain imprecise.
 
 For reproduction, follow [RUNNING_zh.md](RUNNING_zh.md). Run acquisition scripts
 00-03, audit 04, price/actions download 05, then `scripts/07_build_notebook.py`
@@ -36,8 +36,9 @@ Out: Session 1 (5 Sep 2026) · Due: 9:00 AM, Session 2 (12 Sep 2026)
 
 **This repository gets you the data. Everything after that is yours to write.**
 
-The full assignment brief is on Brightspace and it is the specification. This file
-only covers running the pipeline.
+The one-page assignment sheet on Brightspace says what to produce. This file says how
+to get the data and pins down the details that need exact numbers. `REPORT.md` is the
+skeleton for your write-up and lists the six questions.
 
 ---
 
@@ -79,7 +80,7 @@ after attempting the download, and say what you tried and what the error was.
 
 ## What you write
 
-Everything else, in your own notebook, from the specification in the brief:
+Everything else, in your own notebook:
 
 - the two tone measures, proportional and tf.idf
 - the trading calendar, the day-0 rule, and the filing-period excess return
@@ -87,8 +88,36 @@ Everything else, in your own notebook, from the specification in the brief:
 - the sample filters, the controls, and the waterfall in Table 1
 - all seven exhibits and the regressions behind them
 
-There is no notebook template and there are no tests in this repository. Structure
-your own notebook around the exhibits in the brief, in that order.
+There is no notebook template and there are no tests in the starter repository.
+Structure your own notebook around the exhibits on the assignment sheet, in that order.
+
+## The details that need exact numbers
+
+The September 7 instructor update fixes the following choices for everyone in the
+class.
+
+**Sample filters**, applied in this order:
+
+1. Drop amendments and anything that failed to parse.
+2. Require at least 2,000 words for a 10-K and 1,000 for a 10-Q.
+3. Keep the earliest filing per company and calendar quarter.
+4. Require a usable day 0 and a day -1 price of at least $3.
+5. Require at least 60 trading days of returns before and after day 0.
+
+**Day 0.** Use the first trading day on or after the later of the filing date and
+the acceptance date shifted one day when acceptance occurs at or after 16:00
+Eastern. Convert `acceptance_datetime` from UTC first.
+
+**Windows.** Measure the SPY excess return over [0,+3] from the day -1 close.
+Measure pre-filing volatility and controls over [-60,-6] and subsequent realized
+volatility over [+4,+63].
+
+**Controls.** Include log size, log dollar volume and SPY excess return over
+[-60,-6], pre-filing volatility, a 10-K indicator, and company and calendar-quarter
+fixed effects.
+
+**TF-IDF self-check.** With three documents and list `{LOSS, RISK}`, the required
+TF-IDF values for d1-d3 are 0.8480, 0.2885 and 0.5026 using natural logarithms.
 
 ---
 
