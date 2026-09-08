@@ -43,7 +43,7 @@ $env:PYTHONUNBUFFERED = "1"
 
 ## 执行分析与生成报告
 
-下载完成后运行以下命令。脚本 05 补充用于恢复历史名义价格与成交量单位的拆股记录。脚本 07 会执行分析脚本 06、运行测试，并保存 Notebook 全部输出，无需重复执行 06。
+下载完成后运行以下命令。脚本 05 补充用于恢复历史名义价格与成交量单位的拆股记录。脚本 07 会执行分析脚本 06、运行测试、执行脚本 10 的 PayPal 文本核对，并保存 Notebook 全部输出，无需重复执行 06 或 10。
 
 ```powershell
 & .venv/Scripts/python.exe scripts/05_get_price_actions.py
@@ -54,7 +54,7 @@ $env:PYTHONUNBUFFERED = "1"
 仅重新计算表格时，可以单独运行 `scripts/06_run_analysis.py`。更改分析代码后重新执行 07 和 08，保持输出一致。
 
 - `assignment1.ipynb`：已执行的 Notebook，包含六张表、一张图、完整模型结果和十一项测试输出。
-- `output/pdf/assignment1_report.pdf`：六页英文报告，按顺序回答 Q1-Q6。
+- `output/pdf/assignment1_report.pdf`：六页英文报告，遵循 TA 的 1–10 节结构，并在指定章节回答 Q1-Q6。
 - `ANALYSIS_CHOICES.md`：记录新版要求之外仍需确定的少量实施口径。
 - `METHODOLOGY.md`：样本、变量、TF-IDF、事件日和统计检验定义。
 - `AI_USE.md`：实际 AI 使用与作者贡献说明。

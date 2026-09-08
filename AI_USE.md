@@ -2,6 +2,13 @@
 
 **Tool used:** OpenAI Codex.
 
+The September 8 revision reorganizes the report into the instructor's ten sections,
+enlarges the black body text, explains all variables and continuous score scaling,
+and replaces an unsupported boilerplate interpretation with a reproducible PayPal
+sentence comparison. Codex checked the raw visible text and added the case's
+four-day excess return and pre/post volatility. The model specification and
+estimated results are unchanged in this revision.
+
 The final editorial review converted conversational change-history language in
 the report and notebook into formal descriptions of the implemented methods.
 Development history remains in this disclosure. Codex verified the increase in
@@ -21,7 +28,8 @@ notebook, methodology and running instructions, and English report. It assisted
 with sample rules, equation (1), event timing, control construction, regressions,
 interpretation, and PDF layout verification. The instructor supplied the original
 acquisition scripts and modules; those are not original student or AI work.
-Additions include scripts 04-08 and src/analysis_data.py and src/analysis_models.py.
+Additions include the analysis and report scripts, including scripts 04-08 and 10,
+and src/analysis_data.py and src/analysis_models.py.
 
 **Student contribution and authorship:** The student supplied the current brief,
 reference material and SEC contact identity, authorized the work, and discussed

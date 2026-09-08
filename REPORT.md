@@ -11,6 +11,17 @@ The completed six-page report is
 required tables, Figure 1, and numbered answers to Q1-Q6 from the September 7
 instructor update.
 
+The report now follows the instructor's sections exactly: 1. What I did;
+2. Data construction; 3. Word lists; 4. Method; 5. What the measures are made of;
+6. Trends, 2021-2025; 7. Uncertainty, volatility and returns; 8. 10-K versus 10-Q;
+9. Limitations; 10. What I would do next. Q1/Q2 appear in section 5, Q3 in section 6,
+Q4/Q6 in section 7, and Q5 in section 8, following the section placement in the
+instructor template. Body text and answers use 10.5-point black type.
+
+The PayPal text comparison and event outcomes are reproduced by
+`scripts/10_report_evidence.py`, which is also executed in the notebook. Run it
+before rebuilding the PDF when working directly from the cached analysis outputs.
+
 The revised sample follows the exact instructor filters and contains 1,536
 filings from 91 issuers. It applies the $3 day -1 price threshold, 60-day history
 requirements, [-60,-6] pre-filing window, [+4,+63] post-filing window, and the

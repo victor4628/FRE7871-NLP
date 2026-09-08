@@ -14,6 +14,7 @@ The remaining implementation choices are limited:
 | Inference | Use four Newey-West lags for the 20-quarter aggregate trends and company-clustered standard errors for repeated filing observations. |
 | Return precision | Report an approximate 80%-power minimum detectable effect, `(cluster-t critical + 0.842) × clustered SE`. |
 | Benchmark check | Re-estimate Table 6 using ARKK rather than SPY. |
+| Q1/Q2 case evidence | Compare uncertainty-containing sentences (at least 12 tokens) in successive PayPal annual Risk Factors sections; describe the selected filing's observed return and volatility. |
 
 No shell-company exclusion or other sample filter is added beyond the updated
 rules; the required $3 cutoff is applied. No optional size-only or turnover

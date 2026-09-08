@@ -71,3 +71,23 @@ is the only additional outcome specification.
 The return table reports an approximate 80%-power minimum detectable effect as
 `(cluster-t critical + 0.842) × clustered SE`. This is a precision diagnostic,
 not observed power. All estimates are retrospective associations.
+
+## Report evidence and interpretation
+
+The report uses the instructor's sections 1-10, with the question answers at the
+specified locations. Outcome scores remain continuous after standardization:
+`z = (score - mean) / SD`; no grouping or discretization is applied. The model's
+10-Q indicator with a 10-K reference is equivalent to the required 10-K indicator
+with the intercept reparameterized. Prior volatility enters in natural logs.
+
+Table 1 separately identifies the one lost JOBY filing whose missing common-share
+count prevents computing required size. This is a regression-data requirement,
+not an extra economic screening rule specified by the instructor.
+
+`scripts/10_report_evidence.py` compares PayPal's 2024-02-08 and 2023-02-10 10-K
+Risk Factors sections using visible narrative consistent with the scorer. It
+counts current uncertainty-containing sentences of at least 12 tokens that occur
+contiguously in the preceding risk section after token normalization. The 173 of
+232 matches support repeated disclosure for this case; they are not a whole-corpus
+copying estimate. The report also describes PayPal's measured four-day return and
+before/after volatility without attributing those outcomes to the wording.

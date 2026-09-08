@@ -83,6 +83,12 @@ def show_table(frame):
     md('## Table 3 — Thirty most common words per list\nEach share uses all occurrences on its own category list '
        'as the denominator. The ten most frequent words account for 28.1% of Negative and 74.4% of Uncertainty counts.')
     code("t3=pd.read_csv(RESULTS/'table3.csv')\nfor category in ['Negative','Uncertainty']:\n    display(Markdown('### '+category))\n    show_table(t3.loc[t3.category.eq(category)].reset_index(drop=True))")
+    md('## Q1 and Q2 — Filing text and its outcomes\n'
+       'The PayPal case uses the same visible narrative as the scorer. Match uncertainty-containing sentences '
+       'of at least 12 tokens in Risk Factors against the preceding annual report, ignoring punctuation and case. '
+       'This is a case study of retained disclosure, not a corpus-wide estimate of duplication. '
+       'Negative counts also reflect ordinary credit-loss and fraud-protection accounting; a high count need not be new bad news.')
+    code("evidence_module=runpy.run_path(str(ROOT/'scripts/10_report_evidence.py'),run_name='evidence_module')\nevidence_module['main']()\nevidence=json.loads((RESULTS/'report_evidence.json').read_text())\ndisplay(pd.Series(evidence['case'],name='PayPal 10-K filed 2024-02-08'))\nprint('Repeated uncertainty sentences:',evidence['sentences_reappearing_in_prior_risk_section'],'of',evidence['uncertainty_sentences_at_least_12_tokens'])\nprint('Example:',evidence['matched_examples'][6])")
     md('## Figure 1 — Quarterly language scores and VIX\nAverage within issuer/form/filing quarter before averaging across issuers. '
        'Separate 10-K and 10-Q to expose form composition. VIX is quarterly mean market uncertainty on the right axis, '
        'not a substitute for company-level realized volatility.')
@@ -94,7 +100,8 @@ def show_table(frame):
     md('## Table 5 — Uncertainty and next-quarter volatility\nThe outcome is log annualized volatility on [+4,+63]; '
        'pre-volatility uses [-60,-6]. Both models include log size, log average dollar volume, prior SPY excess return, '
        'a 10-K indicator, company effects and calendar-quarter effects. The second adds log prior volatility. '
-       'The score is standardized within the same complete-case corpus.')
+       'The score is standardized within the same complete-case corpus. This remains continuous: '
+       'z = (score - mean)/SD. Standardization changes coefficient units, not fitted values or t-statistics.')
     code("t5=pd.read_csv(RESULTS/'table5.csv')\nshow_table(t5[['measure','control_set','formula','beta','se','t','p','ci_low','ci_high','n','firms','corpus']])\nassert t5.groupby('measure').corpus.nunique().eq(1).all()\nc=pd.read_csv(RESULTS/'all_regression_coefficients.csv')\nshow_table(c.loc[c.model.isin(t5.model)])")
     md('## Table 6 — Sentiment and filing-period excess returns\nThe outcome is stock minus SPY buy-and-hold return '
        'over [0,+3], in percentage points. The model includes the full required control and fixed-effect set. The minimum '
