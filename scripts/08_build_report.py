@@ -151,14 +151,14 @@ def build(author, netid):
         [34,157,70,184,70],True))
     matched,eligible = e["sentences_reappearing_in_prior_risk_section"],e["uncertainty_sentences_at_least_12_tokens"]
     story += [
-        P(f'<b>Q1. What drives the counts?</b> The top ten words contribute {s["top10_negative_share"]:.1f}% of Negative '
+        P(f'<b>Q1. What is each measure actually made of?</b> The top ten words contribute {s["top10_negative_share"]:.1f}% of Negative '
           f'and {s["top10_uncertainty_share"]:.1f}% of Uncertainty occurrences. Uncertainty therefore measures much '
           'recurring conditional language, not just fresh managerial doubt. In PayPal\'s 2024-filed 10-K, '
           f'{matched}/{eligible} ({100*matched/eligible:.1f}%) uncertainty-containing sentences in Risk Factors also '
           'appear in its previous annual report after token normalization (minimum 12 words). Repeated warnings concern '
           'cyberattacks, fraud and business interruptions. This is direct evidence of retained risk disclosure in that case; '
           'it does not show that all uncertainty language across the sample is copied.'),
-        P(f'<b>Q2. Are the measures different?</b> Pooled correlations are {corr[("All","prop")]:.3f} (proportions) '
+        P(f'<b>Q2. Are sentiment and uncertainty measuring different things?</b> Pooled correlations are {corr[("All","prop")]:.3f} (proportions) '
           f'and {corr[("All","tfidf")]:.3f} (TF-IDF); within 10-K they are {corr[("10-K","prop")]:.3f}/{corr[("10-K","tfidf")]:.3f}, '
           f'and within 10-Q {corr[("10-Q","prop")]:.3f}/{corr[("10-Q","tfidf")]:.3f}. These are largely overlapping '
           'disclosure measures, not two independent confirmations. '
@@ -186,7 +186,7 @@ def build(author, netid):
         ("10-K","negative_prop"),("10-K","negative_tfidf"),("10-K","uncertainty_prop"),("10-K","uncertainty_tfidf"),
         ("10-Q","negative_prop"),("10-Q","negative_tfidf"),("10-Q","uncertainty_prop"),("10-Q","uncertainty_tfidf")]]
     story += [
-        P(f'<b>Q3. Which trend estimate is credible?</b> I lead with the required within-company model because it removes '
+        P(f'<b>Q3. Did either measure trend over 2021-2025?</b> I lead with the required within-company model because it removes '
           'stable differences between companies, not because it produces a preferred sign. Its similarity to the aggregate '
           'result supports the direction after that correction. Annual Negative rises '
           f'{kn.within_beta:.3f} percentage points/year (t={kn.within_t:.2f}) and {knt.within_beta:.3f} TF-IDF units/year '
@@ -199,7 +199,7 @@ def build(author, netid):
         PageBreak(), P("7. Uncertainty, volatility and returns","Section"),
         P("Table 5. Does uncertainty predict subsequent volatility?","Section"),
         P('Dependent variable: log annualized volatility on [+4,+63]. Main independent variable: continuous uncertainty, '
-          'computed separately as proportion or TF-IDF. Columns A/B differ only by prior volatility. '
+          'computed separately as proportion or TF-IDF. Columns distinguish whether prior volatility is omitted or included. '
           'All columns include size, dollar volume, prior excess return, report type, company and calendar-quarter effects.','Note')]
     selected = [vol.loc[(m,c)] for m in ["uncertainty_prop","uncertainty_tfidf"]
                 for c in ["without_pre_volatility","with_pre_volatility"]]
@@ -220,14 +220,14 @@ def build(author, netid):
           ["Prior volatility (log)"]+coefficient_cells("log_pre_vol"),
           ["Score p-value"]+[pv(r.p) for r in selected],
           ["Filings / companies"]+[f"{r.n:,} / {r.firms}" for r in selected]]
-    story.append(tab(["Variable / statistic","Proportion (+1 pp) A","Proportion (+1 pp) B",
-                      "TF-IDF (+1 unit) A","TF-IDF (+1 unit) B"],rows,
+    story.append(tab(["Variable / statistic","Proportion / Without prior-vol control","Proportion / With prior-vol control",
+                      "TF-IDF / Without prior-vol control","TF-IDF / With prior-vol control"],rows,
                      [167,87,87,87,87]))
-    story.append(P('A: without prior volatility; B: with prior volatility. Parentheses are company-clustered standard errors. '
-                   'pp means percentage point of all words. TF-IDF coefficients are per one term-weight unit.','Note'))
+    story.append(P('Proportion coefficients are per 1 percentage point of all words; TF-IDF coefficients are per 1 '
+                   'term-weight unit. Parentheses are company-clustered standard errors.','Note'))
     a,b,c,d=selected
     ar,br,cr,dr=[r.beta*reported_scale(r) for r in selected]
-    story.append(P(f'<b>Q4.</b> Adding prior volatility changes the proportional coefficient from {ar:.4f} to '
+    story.append(P(f'<b>Q4. Does uncertainty language predict volatility?</b> Adding prior volatility changes the proportional coefficient from {ar:.4f} to '
         f'{br:.4f} log points per percentage point, and TF-IDF from {cr:.4f} to {dr:.4f} log points per unit. The declines are '
         f'{100*(1-b.beta/a.beta):.1f}% and {100*(1-d.beta/c.beta):.1f}%, respectively. The added control accounts for '
         'pre-existing volatility correlated with the language score. Both earlier estimates were already imprecise '
@@ -247,7 +247,7 @@ def build(author, netid):
         f'{r1.mde80*reported_scale(r1):.3f} return percentage points per 1 proportion point and '
         f'{r2.mde80*reported_scale(r2):.3f} return percentage points per TF-IDF unit. '
         'These are precision diagnostics for detecting effects, not measured test power.','Note'),
-        P('<b>Q6. Which results do I believe?</b> Annual Negative trends are most convincing: both weights agree '
+        P('<b>Q6. Which of your results do you believe?</b> Annual Negative trends are most convincing: both weights agree '
           'within companies. Uncertainty trends are less uniform: annual proportions and TF-IDF disagree, while the '
           'quarterly proportional decline is borderline. Aggregate t-statistics alone are weaker evidence with only 20 quarters. '
           'For volatility, the pooled controlled effects are near zero or small, with 95% intervals of '
@@ -259,7 +259,7 @@ def build(author, netid):
         PageBreak(),P("8. 10-K versus 10-Q","Section"),
         P("Table 5 by form. Uncertainty predicting log subsequent volatility","Note"),
         P('Every row uses uncertainty words; "weighting" specifies proportion versus TF-IDF. Both columns include '
-          'size, dollar volume, prior return, company and calendar-quarter effects; B adds log prior volatility. '
+          'size, dollar volume, prior return, company and calendar-quarter effects; the second result adds log prior volatility. '
           'Report type is constant within each sample. Proportion coefficients are per 1 percentage point and TF-IDF '
           'coefficients per 1 unit; IDF is recomputed within form.','Note')]
     rows=[]
@@ -270,10 +270,11 @@ def build(author, netid):
             rows.append([form,"Proportion" if measure.endswith("prop") else "TF-IDF",
                          f"{va.beta*reported_scale(va):.3f} / {pv(va.p)}",
                          f"{vb.beta*reported_scale(vb):.3f} / {pv(vb.p)}",f"{vb.n:,}"])
-    story.append(tab(["Form","Uncertainty weighting","A: coefficient / p","B: coefficient / p","N"],rows,[43,139,135,135,63]))
+    story.append(tab(["Form","Uncertainty weighting","Without prior-vol control: coefficient / p",
+                      "With prior-vol control: coefficient / p","N"],rows,[43,139,135,135,63]))
     fk,fq=e["forms"]["10-K"],e["forms"]["10-Q"]
     story += [
-        P(f'<b>Q5.</b> The forms do not behave identically. Median length is {fq["median_words"]:,.0f} words for '
+        P(f'<b>Q5. Do 10-Qs behave like 10-Ks?</b> The forms do not behave identically. Median length is {fq["median_words"]:,.0f} words for '
           f'10-Q versus {fk["median_words"]:,.0f} for 10-K. Negative-proportion SD is '
           f'{fq["negative_prop_sd_pp"]:.3f} versus {fk["negative_prop_sd_pp"]:.3f} percentage points; Uncertainty SD '
           f'is {fq["uncertainty_prop_sd_pp"]:.3f} versus {fk["uncertainty_prop_sd_pp"]:.3f}. A shorter denominator '
