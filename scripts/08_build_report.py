@@ -231,13 +231,14 @@ def build(author, netid):
     ar,br,cr,dr=[r.beta*reported_scale(r) for r in selected]
     story.append(P(f'<b>Q4. Does uncertainty language predict volatility?</b> Adding prior volatility changes the proportional coefficient from {ar:.4f} to '
         f'{br:.4f} log points per percentage point, and TF-IDF from {cr:.4f} to {dr:.4f} log points per unit. The declines are '
-        f'{100*(1-b.beta/a.beta):.1f}% and {100*(1-d.beta/c.beta):.1f}%, respectively. The added control accounts for '
-        'pre-existing volatility correlated with the language score. Both earlier estimates were already imprecise '
-        'with the other controls and fixed effects; neither controlled estimate establishes additional predictive content.'))
+        f'{100*(1-b.beta/a.beta):.1f}% and {100*(1-d.beta/c.beta):.1f}%, consistent with prior volatility capturing pre-existing '
+        'risk. However, the no-prior-volatility coefficients are already imprecise after the other required controls and '
+        'fixed effects, so this sample does not reproduce the anticipated large unadjusted relation; the controlled estimates '
+        'show no incremental predictive content.'))
     story += [P("Table 6. Does negative language predict four-day excess returns?","Section"),
-              P('Dependent variable: stock-minus-SPY buy-and-hold return on [0,+3], in percentage points. Main '
-                'independent variable: continuous Negative proportion or Negative TF-IDF. All Table 5 controls and log prior '
-                'volatility are included. Proportion effects are per 1 percentage-point increase; TF-IDF effects are per 1 unit.','Note')]
+              P('Outcome: stock-minus-SPY buy-and-hold return on [0,+3], in percentage points. Predictor: continuous '
+                'Negative proportion or TF-IDF. Controls: log size, log dollar volume, prior excess return and volatility, '
+                'plus report type, company and quarter effects. Effects are per 1 percentage point or 1 TF-IDF unit.','Note')]
     story.append(tab(["Negative-language predictor","Coefficient","Clustered SE","t","p","80% MDE"],
         [[labels[r.measure]+(" (+1 pp)" if r.measure.endswith("_prop") else " (+1 unit)"),
           f"{r.beta*reported_scale(r):.3f}",f"{r.se*reported_scale(r):.3f}",f"{r.t:.2f}",pv(r.p),

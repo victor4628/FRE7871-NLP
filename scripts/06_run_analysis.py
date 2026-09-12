@@ -102,7 +102,7 @@ def main():
     raw=pd.read_csv(UNIVERSE_DIR/"ark_holdings_raw.csv")
     company_table=pd.DataFrame([
         ["Unique cleaned securities in frozen snapshot",124,0],
-        ["SEC ticker-to-CIK mapping found",len(universe),124-len(universe)],
+        ["Unresolved SEC ticker-to-CIK mapping",len(universe),124-len(universe)],
         ["At least one 2021-2025 10-K/10-Q",int(universe.status.eq('domestic_filer').sum()),int(universe.status.ne('domestic_filer').sum())],
         ["Unique companies (GOOG and GOOGL count as one)",meta.cik.nunique(),1],
     ],columns=["filter","remaining","removed"])
