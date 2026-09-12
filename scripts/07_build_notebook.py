@@ -14,7 +14,7 @@ def main():
     md=lambda text: cells.append(nbf.v4.new_markdown_cell(text))
     code=lambda text: cells.append(nbf.v4.new_code_cell(text))
     md('# Assignment 1\n## Uncertainty and Sentiment in ARK Company Filings\n'
-       'FRE-GY 7871 A, Fall 2026. The analysis follows the current assignment brief. '
+       'Victor Chen (yc8027) | FRE-GY 7871 A, Fall 2026. The analysis follows the current assignment brief. '
        'The instructor supplied data acquisition; the analysis additions and AI assistance are disclosed in `AI_USE.md`.\n\n'
        'This is a retrospective event study, not an out-of-sample investment strategy. '
        'The complete specification and declared sensitivities are in [METHODOLOGY.md](METHODOLOGY.md).')
@@ -112,20 +112,25 @@ def show_table(frame):
     md('## Form and benchmark checks\nTable 5 is re-estimated separately for 10-K and 10-Q samples, with sample-specific IDF. '
        'The return model is also estimated against ARKK to disclose benchmark sensitivity.')
     code("models=pd.read_csv(RESULTS/'all_outcome_models.csv')\nshow_table(models[['outcome','variant','measure','control_set','formula','beta','se','p','n','corpus']])")
-    md('## Interpretation and limitations\nAnnual-report negative language rises within issuers under both weighting '
-       'schemes; uncertainty trends differ by form and weight. The pre-volatility control attenuates the uncertainty '
-       'coefficient, and neither remaining pooled estimate is precise, so a robust incremental volatility relationship '
-       'is not established. The four-day return test is imprecise. These are different tests '
-       'with different evidence; a blanket claim that the sample is too small is not warranted.\n\n'
-       'The 2026 holdings snapshot creates survivorship/selection bias. It does not reveal former holdings that '
-       'disappeared. Correct acceptance times and contemporaneous share counts do not cure that selection. '
-       'Further limits include full-corpus scoring, 20 aggregate quarters, daily timing, and '
-       'multi-class valuation approximations. The next improvement is a historical holdings universe followed by '
-       'a held-out forecasting evaluation.\n\n'
+    md('## Interpretation and limitations\nThe annual-report Negative trend is the result I trust most within this '
+       'selected sample because proportion and TF-IDF both rise inside companies and the aggregate estimates agree in '
+       'direction. I do not infer a general Uncertainty trend because annual proportion and TF-IDF disagree while both '
+       'quarterly measures fall. Prior volatility explains much of the apparent volatility relationship; the remaining '
+       'pooled language estimates are imprecise. The negative return signs are inconclusive rather than evidence of no effect.\n\n'
+       'The 2026 holdings snapshot omits former holdings and creates survivorship/selection bias. Dictionary scores do '
+       'not distinguish new information from repeated risk language, full-corpus IDF is retrospective, 20 quarters give '
+       'a short aggregate series, daily timing cannot isolate simultaneous earnings news, and multi-class size is '
+       'approximated. Several related form, weighting, control and benchmark specifications also make an isolated small '
+       'p-value less persuasive. Earlier no-control, size-only, prior-volatility-only and both-control models, an '
+       'issuer/time-effects sensitivity, a shell screen, a temporary no-$3 sample and a return-quintile plot are disclosed '
+       'in `AI_USE.md`; the current assignment specification supersedes them.\n\n'
+       'The highest-value next step is to rebuild point-in-time ARK membership from dated holdings files, including firms '
+       'later sold, delisted or failed. The cost is reconciling identifier changes and obtaining filings plus '
+       'delisting-adjusted prices for companies missing from current sources.\n\n'
        'See the short PDF report for the test-by-test discussion and `AI_USE.md` for the authorship disclosure.')
     md('## Plain-language table guide\nA score is the measured amount of uncertainty or negative language. '
        'Outcome tables report proportions per 1 percentage point and TF-IDF per 1 unit. A score p-value tests a zero '
-       'score coefficient. Parentheses in the PDF contain company-clustered standard errors. '
+       'score coefficient. The PDF labels company-clustered standard errors in separate rows or columns. '
        'Log means natural logarithm. P25/P75 are percentiles. Internal variable `score_z` means the '
        'standardized language score named by that model. The intercept is its fitted baseline.')
     md((ROOT/'ANALYSIS_CHOICES.md').read_text(encoding='utf-8'))

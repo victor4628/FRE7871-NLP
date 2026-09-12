@@ -1,6 +1,6 @@
 # Assignment 1 report
 
-**Author:** Yuanpeng Chen
+**Author:** Victor Chen
 
 **NetID:** yc8027
 
@@ -25,8 +25,9 @@ before rebuilding the PDF when working directly from the cached analysis outputs
 The revised sample follows the exact instructor filters and contains 1,536
 filings from 91 issuers. It applies the $3 day -1 price threshold, 60-day history
 requirements, [-60,-6] pre-filing window, [+4,+63] post-filing window, and the
-full required control and fixed-effect set. Table 5 compares the same sample
-without and with prior volatility. Table 6 reports the controlled return test
+full required control and fixed-effect set. Table 5A compares the same full
+sample without and with prior volatility; Table 5B estimates those specifications
+separately for 10-K and 10-Q filings. Table 6 reports the controlled return test
 and its minimum detectable effects.
 
 The executed [assignment1.ipynb](assignment1.ipynb) preserves the calculations.
@@ -37,5 +38,5 @@ The executed [assignment1.ipynb](assignment1.ipynb) preserves the calculations.
 Regenerate the PDF with:
 
 ```powershell
-& .venv/Scripts/python.exe scripts/08_build_report.py --author "Yuanpeng Chen" --netid yc8027
+& .venv/Scripts/python.exe scripts/08_build_report.py --author "Victor Chen" --netid yc8027
 ```

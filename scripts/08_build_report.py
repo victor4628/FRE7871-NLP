@@ -48,10 +48,10 @@ def tab(headers, rows, widths, compact=False):
         ("LINEBELOW",(0,-1),(-1,-1),.4,colors.HexColor("#b5bec5"))]))
     return table
 
-def page_number(canvas, doc):
+def page_number(canvas, doc, author):
     canvas.setFont("Helvetica",8)
     canvas.setFillColor(INK)
-    canvas.drawString(40,24,"FRE-GY 7871 A | Assignment 1 | Yuanpeng Chen")
+    canvas.drawString(40,24,f"FRE-GY 7871 A | Assignment 1 | {author}")
     canvas.drawRightString(A4[0]-40,24,str(doc.page))
 
 def build(author, netid):
@@ -197,34 +197,36 @@ def build(author, netid):
           'language change rather than a trend created entirely by composition; it does not prove management became '
           'more pessimistic or uncertain.'),
         PageBreak(), P("7. Uncertainty, volatility and returns","Section"),
-        P("Table 5. Does uncertainty predict subsequent volatility?","Section"),
+        P("Table 5A. Does uncertainty predict subsequent volatility? Full sample","Section"),
         P('Dependent variable: log annualized volatility on [+4,+63]. Main independent variable: continuous uncertainty, '
           'computed separately as proportion or TF-IDF. Columns distinguish whether prior volatility is omitted or included. '
           'All columns include size, dollar volume, prior excess return, report type, company and calendar-quarter effects.','Note')]
     selected = [vol.loc[(m,c)] for m in ["uncertainty_prop","uncertainty_tfidf"]
                 for c in ["without_pre_volatility","with_pre_volatility"]]
-    def coefficient_cells(term):
+    def coefficient_cells(term, statistic):
         values=[]
         for model in selected:
             found=coefficients.loc[coefficients.model.eq(model.model)&coefficients.term.eq(term)]
-            values.append("-" if found.empty else f"{found.iloc[0].beta:.4f}<br/>({found.iloc[0].se:.4f})")
+            values.append("-" if found.empty else f"{found.iloc[0][statistic]:.4f}")
         return values
     def reported_scale(model):
         measure = model["measure"] if "measure" in model.index else model.name
         if isinstance(measure, tuple):
             measure = measure[0]
         return .01/model.score_sd if measure.endswith("_prop") else 1/model.score_sd
-    def score_cells(models_to_show):
-        return [f"{r.beta*reported_scale(r):.4f}<br/>({r.se*reported_scale(r):.4f})" for r in models_to_show]
-    rows=[["Uncertainty coefficient (SE)"]+score_cells(selected),
-          ["Prior volatility (log)"]+coefficient_cells("log_pre_vol"),
-          ["Score p-value"]+[pv(r.p) for r in selected],
+    def score_cells(models_to_show, statistic):
+        return [f"{r[statistic]*reported_scale(r):.4f}" for r in models_to_show]
+    rows=[["Uncertainty coefficient"]+score_cells(selected,"beta"),
+          ["Uncertainty clustered SE"]+score_cells(selected,"se"),
+          ["Prior-volatility coefficient"]+coefficient_cells("log_pre_vol","beta"),
+          ["Prior-volatility clustered SE"]+coefficient_cells("log_pre_vol","se"),
+          ["Uncertainty p-value"]+[pv(r.p) for r in selected],
           ["Filings / companies"]+[f"{r.n:,} / {r.firms}" for r in selected]]
     story.append(tab(["Variable / statistic","Proportion / Without prior-vol control","Proportion / With prior-vol control",
                       "TF-IDF / Without prior-vol control","TF-IDF / With prior-vol control"],rows,
                      [167,87,87,87,87]))
     story.append(P('Proportion coefficients are per 1 percentage point of all words; TF-IDF coefficients are per 1 '
-                   'term-weight unit. Parentheses are company-clustered standard errors.','Note'))
+                   'term-weight unit. Standard errors cluster by company.','Note'))
     a,b,c,d=selected
     ar,br,cr,dr=[r.beta*reported_scale(r) for r in selected]
     story.append(P(f'<b>Q4. Does uncertainty language predict volatility?</b> Adding prior volatility changes the proportional coefficient from {ar:.4f} to '
@@ -236,38 +238,44 @@ def build(author, netid):
               P('Dependent variable: stock-minus-SPY buy-and-hold return on [0,+3], in percentage points. Main '
                 'independent variable: continuous Negative proportion or Negative TF-IDF. All Table 5 controls and log prior '
                 'volatility are included. Proportion effects are per 1 percentage-point increase; TF-IDF effects are per 1 unit.','Note')]
-    story.append(tab(["Negative-language predictor","Coefficient (SE)","t","p","80% MDE"],
+    story.append(tab(["Negative-language predictor","Coefficient","Clustered SE","t","p","80% MDE"],
         [[labels[r.measure]+(" (+1 pp)" if r.measure.endswith("_prop") else " (+1 unit)"),
-          f"{r.beta*reported_scale(r):.3f} ({r.se*reported_scale(r):.3f})",f"{r.t:.2f}",pv(r.p),
+          f"{r.beta*reported_scale(r):.3f}",f"{r.se*reported_scale(r):.3f}",f"{r.t:.2f}",pv(r.p),
           f"{r.mde80*reported_scale(r):.3f} pp"] for _,r in t6.iterrows()],
-        [184,113,50,59,109]))
+        [164,75,75,42,50,109]))
     r1,r2=ret.loc["negative_prop"],ret.loc["negative_tfidf"]
     story += [P(f'N={r1.n:,} filings and {r1.firms} company clusters. Approximate 80%-power minimum detectable effect '
         f'(MDE) = (t critical at 5%, two-sided + 0.842) x clustered SE: '
         f'{r1.mde80*reported_scale(r1):.3f} return percentage points per 1 proportion point and '
         f'{r2.mde80*reported_scale(r2):.3f} return percentage points per TF-IDF unit. '
         'These are precision diagnostics for detecting effects, not measured test power.','Note'),
-        P('<b>Q6. Which of your results do you believe?</b> Annual Negative trends are most convincing: both weights agree '
-          'within companies. Uncertainty trends are less uniform: annual proportions and TF-IDF disagree, while the '
-          'quarterly proportional decline is borderline. Aggregate t-statistics alone are weaker evidence with only 20 quarters. '
-          'For volatility, the pooled controlled effects are near zero or small, with 95% intervals of '
-          f'[{b.ci_low*reported_scale(b):.3f}, {b.ci_high*reported_scale(b):.3f}] log points per proportion point and '
-          f'[{d.ci_low*reported_scale(d):.3f}, {d.ci_high*reported_scale(d):.3f}] per TF-IDF unit. This limits '
-          'large pooled effects but leaves small effects possible. The form-specific annual TF-IDF finding in section 8 '
-          'is suggestive, not broad confirmation. Return estimates are negative but their intervals include zero; '
-          'the MDEs explain why this test cannot rule out modest effects. A blanket claim that every test lacked power is unwarranted.'),
-        PageBreak(),P("8. 10-K versus 10-Q","Section"),
-        P("Table 5 by form. Uncertainty predicting log subsequent volatility","Note"),
-        P('Every row uses uncertainty words; "weighting" specifies proportion versus TF-IDF. Both columns include '
-          'size, dollar volume, prior return, company and calendar-quarter effects; the second result adds log prior volatility. '
-          'Report type is constant within each sample. Proportion coefficients are per 1 percentage point and TF-IDF '
-          'coefficients per 1 unit; IDF is recomputed within form.','Note')]
+        P('<b>Q6. Which of your results do you believe?</b> I have the most confidence in the direction of the annual-report '
+          'Negative trend within this selected sample. Proportion and TF-IDF both rise inside companies, with t-statistics '
+          f'of {kn.within_t:.2f} and {knt.within_t:.2f}, and the aggregate estimates point the same way. This supports a '
+          'change in filing language among surviving ARK issuers. It does not establish that their underlying businesses '
+          'became more negative, because dictionary counts also capture recurring legal and accounting language.'),
+        P('I do not believe the evidence supports a general rise in Uncertainty. The annual proportion rises but annual '
+          'TF-IDF does not, whereas both quarterly estimates fall; the measures are reacting differently to common hedging '
+          'words and less common terms. For volatility, I believe the strong persistence in volatility and the absence of '
+          'clear incremental information in the pooled language scores: after prior volatility is added, both uncertainty '
+          f'estimates are imprecise, with 95% intervals of [{b.ci_low*reported_scale(b):.3f}, '
+          f'{b.ci_high*reported_scale(b):.3f}] log points per proportion point and '
+          f'[{d.ci_low*reported_scale(d):.3f}, {d.ci_high*reported_scale(d):.3f}] per TF-IDF unit. The isolated controlled '
+          '10-K TF-IDF p-value in section 8 is exploratory because it is one of several form/weight specifications and no '
+          'formal interaction test shows that 10-K and 10-Q effects differ. The return coefficients are negative, but their '
+          'confidence intervals include zero and the MDEs are large. I therefore treat the return result as inconclusive, '
+          'rather than evidence of no effect.'),
+        P("8. 10-K versus 10-Q","Section"),
+        P("<b>Table 5B. Uncertainty and subsequent volatility, by filing type.</b> Table 5A estimates one common slope "
+          "from all filings; Table 5B estimates the same model separately for 10-K and 10-Q. Every row uses Uncertainty; "
+          "headings state the weighting and prior-volatility choice. Other controls are unchanged, and IDF is recomputed "
+          "within each form.","Note")]
     rows=[]
     for form in ["10-K","10-Q"]:
         for measure in ["uncertainty_prop","uncertainty_tfidf"]:
             sample=models.loc[models.outcome.eq("volatility")&models.variant.eq(form)&models.measure.eq(measure)].set_index("control_set")
             va,vb=sample.loc["without_pre_volatility"],sample.loc["with_pre_volatility"]
-            rows.append([form,"Proportion" if measure.endswith("prop") else "TF-IDF",
+            rows.append([form,"Proportion (+1 pp)" if measure.endswith("prop") else "TF-IDF (+1 unit)",
                          f"{va.beta*reported_scale(va):.3f} / {pv(va.p)}",
                          f"{vb.beta*reported_scale(vb):.3f} / {pv(vb.p)}",f"{vb.n:,}"])
     story.append(tab(["Form","Uncertainty weighting","Without prior-vol control: coefficient / p",
@@ -294,25 +302,39 @@ def build(author, netid):
     arkk_prop,arkk_tfidf=arkk.loc["negative_prop"],arkk.loc["negative_tfidf"]
     story += [P(f'The 2026 holdings snapshot selects survivors; failed or exited former holdings are missing, '
         f'and only {int(years.eq(5).sum())}/{s["core_firms"]} retained issuers appear in every filing year. Thus '
-        'trends among survivors need not describe the original population. The 20-quarter aggregate series, '
-        'retrospective IDF, daily event timing and multi-class size proxy also limit inference.'),
-        P('All current model variants are reported: aggregate/within-company trends, paired pooled and form-specific '
-          'volatility models, pooled SPY returns, and the ARKK return benchmark. With ARKK, Negative coefficients are '
+        'trends among survivors need not describe the historical ARK portfolio or the broader market. Only 20 filing '
+        'quarters identify the aggregate time trend, so Newey-West inference is approximate in a short series.'),
+        P('The dictionary does not read context, negation or whether a sentence is new. The concentration of Uncertainty '
+          'counts and the PayPal repetition result show that template language can drive scores. TF-IDF uses the full '
+          'analysis corpus to calculate document frequencies, so it is retrospective rather than investable in real time. '
+          'Daily event timing cannot separate filing text from simultaneous earnings news, and the multi-class share '
+          'aggregation used for size is an approximation.'),
+        P('The current report includes aggregate and within-company trends; full-sample and form-specific volatility '
+          'models with and without prior volatility; and SPY and ARKK return benchmarks. Multiple related tests raise '
+          'the chance of an isolated small p-value. With ARKK, Negative coefficients are '
           f'{arkk_prop.beta*reported_scale(arkk_prop):.3f} per proportion point (p={pv(arkk_prop.p)}) and '
           f'{arkk_tfidf.beta*reported_scale(arkk_tfidf):.3f} per TF-IDF unit (p={pv(arkk_tfidf.p)}); the imprecise pooled '
-          'return conclusion persists. The PayPal repetition check is one case, not a corpus-wide duplication estimate.'),
+          'return conclusion persists.'),
+        P('Earlier exploratory work also ran no-control, size-only, prior-volatility-only and size-plus-volatility outcome '
+          'models, an issuer/time-effects sensitivity, a shell-company screen, a temporary sample without the $3 cutoff, '
+          'and a return-quintile plot. The September 7 instructions superseded those choices. They are disclosed in '
+          'AI_USE.md and were not used to choose the reported conclusion. The PayPal repetition check remains one case, '
+          'not a corpus-wide duplication estimate.'),
         P("10. What I would do next","Section"),
-        P('The most valuable next step is reconstructing historical ARK membership, including firms later dropped or '
-          'failed. This requires dated holdings archives and rebuilding the sample by membership date; it would directly '
-          'address selection in both trends and outcome tests.'),
+        P('The single change that would most improve the test is reconstructing point-in-time ARK membership from dated '
+          'holdings archives, then including each company only during periods when an ARK fund actually held it. This '
+          'would restore firms later sold, delisted or failed and directly test whether the conclusions survive outside '
+          'today\'s selected survivors. The cost is reconciling ticker, name and CIK changes and recovering filings plus '
+          'delisting-adjusted prices; missing archives may also shrink the usable sample.'),
         P('Sources: Loughran and McDonald (2011), Journal of Finance 66, 35-65; instructor assignment sheet and '
           '<link href="https://github.com/anmolsingh0219/FRE-GY-7871A-Assignment1">repository instructions</link>; '
           'SEC EDGAR; Yahoo Finance. Saved calculations, full regression coefficients and filing-text comparisons are in '
           'the notebook. AI assistance is disclosed in AI_USE.md.','Note')]
     target=DEST/"assignment1_report.pdf"
+    footer=lambda canvas, doc: page_number(canvas,doc,author)
     SimpleDocTemplate(str(target),pagesize=A4,leftMargin=40,rightMargin=40,topMargin=32,bottomMargin=40,
                       title="Uncertainty and Sentiment in ARK Company Filings",author=author).build(
-                      story,onFirstPage=page_number,onLaterPages=page_number)
+                      story,onFirstPage=footer,onLaterPages=footer)
     print(target)
 
 if __name__ == "__main__":

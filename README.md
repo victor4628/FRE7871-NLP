@@ -17,7 +17,8 @@ The revised sample contains 1,536 reports from 91 issuers. It follows the TA's
 September 7 filters, including the $3 day -1 price threshold, 60-day history
 requirements and one earliest filing per company-quarter. Outcome models include
 the required size, dollar-volume, prior-return, report-type, company and quarter
-controls. Table 5 compares models without and with prior volatility on one sample;
+controls. Table 5A compares models without and with prior volatility on one full sample;
+Table 5B estimates the same pair separately for 10-K and 10-Q filings;
 Table 6's pooled return estimates remain imprecise.
 
 For reproduction, follow [RUNNING_zh.md](RUNNING_zh.md). Run acquisition scripts
