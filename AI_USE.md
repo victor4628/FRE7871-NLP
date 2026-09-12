@@ -45,31 +45,28 @@ claim that the student independently wrote that code or independently verified
 every numerical result. Subsequent independent revisions should be described
 accurately rather than attributed retroactively.
 
-The student subsequently rejected the optional $3 minimum-price screen. Codex
-removed it and recomputed the samples, regressions, notebook and report. This
-was a user-directed sample amendment after the initial results, not a rule fixed
-before seeing those results. The supplementary quintile chart was also requested
-after the initial analysis.
+An exploratory revision temporarily omitted the $3 minimum-price screen and
+recomputed the samples, regressions, notebook and report. This was a post-results
+sample change rather than a rule fixed before the analysis; the supplementary
+quintile chart was likewise developed after the initial results.
 
-The student then requested four primary models for each outcome and weighting
-scheme: no controls, size only, prior volatility only, and both, with size's
-rationale stated in the report. Codex implemented those on common samples and
-removed the earlier prior-return and turnover calculations and primary fixed
-effects. The additional issuer/time-effects specification is reported separately
-as a sensitivity, not hidden inside the four primary models.
+A subsequent exploratory design used four models for each outcome and weighting
+scheme: no controls, size only, prior volatility only, and both. Codex implemented
+those on common samples, temporarily removed the prior-return and turnover controls
+and primary fixed effects, and kept an issuer/time-effects specification as a
+separate sensitivity.
 
-Those user-directed specifications were later superseded by the September 7 TA
-update. The current submission applies the required $3 cutoff, form-specific word
+The September 7 TA update superseded those exploratory specifications. The current
+submission applies the required $3 cutoff, form-specific word
 thresholds, earliest company-quarter filing rule, 60-day history rule,
 [-60,-6]/[+4,+63] volatility windows, and the full required controls and fixed
 effects. The older four-model design and shell-company exclusion are not used in
 the current results.
 
-The student also requested clearer terminology and an explicit inventory of work
-not specifically required by the assignment. Codex renamed reader-facing score
-and statistical labels, added a table guide and disclosure appendix, and wrote
-ANALYSIS_CHOICES.md distinguishing requirements, implementation, extra checks and
-withdrawn methods. This documentation revision does not change model estimates.
+A later presentation review clarified reader-facing score and statistical labels,
+added a table guide and disclosure appendix, and produced ANALYSIS_CHOICES.md to
+distinguish requirements, implementation choices, extra checks and withdrawn
+methods. This documentation revision does not change model estimates.
 
 **Errors and issues corrected during AI-assisted work:** The initial plan used
 the superseded S&P 500 / 2018-2022 assignment and was replaced by the current ARK

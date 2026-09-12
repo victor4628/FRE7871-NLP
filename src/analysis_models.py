@@ -34,7 +34,7 @@ def clustered_fit(formula, data, two_way=False):
     model = smf.ols(formula, data=data, missing="raise")
     # Nested fixed effects can create redundant dummy columns (especially when
     # annual filers always report in the same season). Remove only algebraic
-    # redundancies, preserving the estimable tone/time coefficient.
+    # redundancies, preserving the estimable language/time coefficient.
     x = model.exog
     _, r, pivot = qr(x, mode="economic", pivoting=True)
     tol = max(x.shape)*np.finfo(float).eps*abs(r).max()

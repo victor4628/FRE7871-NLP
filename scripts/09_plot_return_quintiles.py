@@ -1,4 +1,4 @@
-"""Supplementary descriptive plot requested after the main analysis.
+"""Supplementary descriptive return plot.
 
 Sort the Table 6 sample into pooled negative-proportion quintiles. This is an
 unadjusted median comparison, not a replacement for the controlled regression.

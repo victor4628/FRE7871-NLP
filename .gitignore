@@ -20,4 +20,5 @@ outputs/*
 ark_filings_*.tar.gz
 download.log
 .pytest_cache/
+.Rhistory
 output/pdf/qa/
