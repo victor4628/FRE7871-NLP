@@ -126,7 +126,7 @@ TF-IDF values for d1-d3 are 0.8480, 0.2885 and 0.5026 using natural logarithms.
 
 ```bash
 git clone <your fork of this repo>
-cd assignment1
+cd FRE7871-NLP
 python -m venv .venv && .venv\Scripts\activate     # Windows
 pip install -r requirements.txt
 ```
