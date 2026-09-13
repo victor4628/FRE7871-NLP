@@ -4,20 +4,19 @@
 
 **NetID:** yc8027
 
-**Repository:** https://github.com/victor4628/FRE7871-NLP/tree/main/assignment1
+**Repository:** https://github.com/victor4628/FRE7871-NLP
 
-The completed report is [assignment1_report.pdf](output/pdf/assignment1_report.pdf).
-It contains all six required tables, Figure 1, and numbered answers to Q1-Q6 from
-the September 7 instructor update, followed by an exploratory portfolio extension.
+The completed six-page report is
+[assignment1_report.pdf](output/pdf/assignment1_report.pdf). It contains all six
+required tables, Figure 1, and numbered answers to Q1-Q6 from the September 7
+instructor update.
 
 The report now follows the instructor's sections exactly: 1. What I did;
 2. Data construction; 3. Word lists; 4. Method; 5. What the measures are made of;
 6. Trends, 2021-2025; 7. Uncertainty, volatility and returns; 8. 10-K versus 10-Q;
 9. Limitations; 10. What I would do next. Q1/Q2 appear in section 5, Q3 in section 6,
 Q4/Q6 in section 7, and Q5 in section 8, following the section placement in the
-instructor template. Section 11 reports five language-ranked portfolios, a
-cost-adjusted benchmark comparison, and low-minus-high portfolio results. Body
-text and answers use 10.5-point black type.
+instructor template. Body text and answers use 10.5-point black type.
 
 The PayPal text comparison and event outcomes are reproduced by
 `scripts/10_report_evidence.py`, which is also executed in the notebook. Run it
@@ -39,6 +38,5 @@ The executed [assignment1.ipynb](assignment1.ipynb) preserves the calculations.
 Regenerate the PDF with:
 
 ```powershell
-& .venv/Scripts/python.exe scripts/15_run_language_portfolios.py --report-sample
 & .venv/Scripts/python.exe scripts/08_build_report.py --author "Victor Chen" --netid yc8027
 ```

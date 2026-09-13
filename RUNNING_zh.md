@@ -1,6 +1,6 @@
 # 本地运行说明
 
-在课程仓库的 `assignment1` 目录使用 PowerShell。Python 环境位于该目录下的 `.venv`，不提交到 GitHub。
+在项目根目录使用 PowerShell。Python 环境位于 `.venv`，不提交到 GitHub。
 
 当前已安装 Python 3.12 环境所需依赖。若要在另一台 Windows 电脑复现本次安装，在新建的 Python 3.12 虚拟环境内运行 `python -m pip install -r requirements-lock.txt`。锁定文件包含 Windows 专用依赖；其他系统使用老师的 `requirements.txt`，并重新验证运行结果。
 
@@ -48,14 +48,13 @@ $env:PYTHONUNBUFFERED = "1"
 ```powershell
 & .venv/Scripts/python.exe scripts/05_get_price_actions.py
 & .venv/Scripts/python.exe scripts/07_build_notebook.py
-& .venv/Scripts/python.exe scripts/15_run_language_portfolios.py --report-sample
 & .venv/Scripts/python.exe scripts/08_build_report.py --author "Your Name" --netid your_netid
 ```
 
 仅重新计算表格时，可以单独运行 `scripts/06_run_analysis.py`。更改分析代码后重新执行 07 和 08，保持输出一致。
 
-- `assignment1.ipynb`：已执行的 Notebook，包含六张表、一张图、完整模型结果和测试输出。
-- `output/pdf/assignment1_report.pdf`：十页英文报告，遵循 TA 的 1–10 节结构、回答 Q1-Q6，并附带 exploratory portfolio results。
+- `assignment1.ipynb`：已执行的 Notebook，包含六张表、一张图、完整模型结果和十一项测试输出。
+- `output/pdf/assignment1_report.pdf`：六页英文报告，遵循 TA 的 1–10 节结构，并在指定章节回答 Q1-Q6。
 - `ANALYSIS_CHOICES.md`：记录新版要求之外仍需确定的少量实施口径。
 - `METHODOLOGY.md`：样本、变量、TF-IDF、事件日和统计检验定义。
 - `AI_USE.md`：实际 AI 使用与作者贡献说明。
