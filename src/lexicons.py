@@ -35,13 +35,13 @@ def load_master_dictionary(path: Path | None = None) -> pd.DataFrame:
 def lm_word_lists(master: pd.DataFrame | None = None) -> dict[str, set[str]]:
     """{'Negative': {...}, 'Positive': {...}, ...} from the master dictionary.
 
-    A non-zero entry in a category column is the year the word entered that
-    category, so 'non-zero' means 'is in the list'.
+    A positive entry is the year the word entered a category. A negative year
+    marks a word that was subsequently removed and is therefore not active.
     """
     master = master if master is not None else load_master_dictionary()
     out = {}
     for cat in LM_CATEGORIES:
-        out[cat] = set(master.loc[master[cat].fillna(0) != 0, "Word"])
+        out[cat] = set(master.loc[master[cat].fillna(0) > 0, "Word"])
     return out
 
 

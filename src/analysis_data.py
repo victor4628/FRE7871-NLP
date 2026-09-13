@@ -213,7 +213,7 @@ def load_text_data():
     return meta, arrays["counts"], arrays["vocabulary"].tolist()
 
 
-def score_corpus(meta, counts, vocabulary, active_only=False):
+def score_corpus(meta, counts, vocabulary, active_only=True):
     """Re-estimate IDF using only the specified, unique filing corpus."""
     if not meta.accession.is_unique:
         raise ValueError("TF-IDF corpus must contain unique accessions")

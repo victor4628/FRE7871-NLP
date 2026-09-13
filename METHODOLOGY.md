@@ -22,7 +22,9 @@ removed, as are tables whose digits exceed 15% of non-space characters. Use the
 starter uppercase tokenizer without stemming or stopword removal. The updated
 assignment does not call for a shell-company exclusion, so none is applied.
 
-Use the 2,355-word LM Negative list and 297-word Uncertainty list. A proportional
+Use the March 2026 Loughran-McDonald Master Dictionary 1993-2025. Positive-year
+category flags give 2,345 active Negative words and 297 active Uncertainty words;
+the 10 Negative entries marked with a negative removal year are excluded. A proportional
 score is list-word occurrences divided by all tokens. Equation (1) is
 
 `w_ij = [(1 + ln(tf_ij)) / (1 + ln(a_j))] ln(N / df_i)` for `tf_ij > 0`,

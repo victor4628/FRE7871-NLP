@@ -5,6 +5,7 @@ from lxml import html
 
 from src.analysis_models import clustered_fit
 from src.analysis_data import cover_share_facts
+from src.lexicons import lm_word_lists
 
 
 def test_redundant_fixed_effects_keep_identified_slope():
@@ -30,3 +31,17 @@ def test_common_classes_are_summed_only_without_total():
     total='''<xbrli:context id="total"><xbrli:period><xbrli:instant>2022-01-01</xbrli:instant></xbrli:period></xbrli:context>
     <ix:nonfraction name="dei:EntityCommonStockSharesOutstanding" contextref="total" scale="3">125</ix:nonfraction>'''
     assert cover_share_facts(html.fromstring(raw.replace('</html>',total+'</html>')),pd.Timestamp('2022-01-05'))[0]==125000
+
+
+def test_removed_lm_words_are_not_active():
+    master = pd.DataFrame({
+        "Word": ["ACTIVE", "REMOVED"],
+        "Negative": [2014, -2020],
+        "Positive": [0, 0],
+        "Uncertainty": [0, 0],
+        "Litigious": [0, 0],
+        "Strong_Modal": [0, 0],
+        "Weak_Modal": [0, 0],
+        "Constraining": [0, 0],
+    })
+    assert lm_word_lists(master)["Negative"] == {"ACTIVE"}

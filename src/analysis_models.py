@@ -122,7 +122,7 @@ def trend_tests(core, counts, vocabulary):
 
 
 def outcome_models(sample, counts, vocabulary, outcome, variant="pooled",
-                   two_way=False, active_only=False, benchmark="SPY"):
+                   two_way=False, active_only=True, benchmark="SPY"):
     scored = score_corpus(sample, counts, vocabulary, active_only=active_only)
     category = "uncertainty" if outcome == "volatility" else "negative"
     outcome_name = "log_post_vol" if outcome == "volatility" else (

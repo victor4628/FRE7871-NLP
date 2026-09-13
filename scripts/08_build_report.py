@@ -12,6 +12,7 @@ from reportlab.platypus import Image, PageBreak, Paragraph, SimpleDocTemplate, S
 
 ROOT = Path(__file__).resolve().parents[1]
 RESULTS = ROOT / "outputs/analysis"
+PORTFOLIO = ROOT / "outputs/investment_research/portfolio_trial_report_sample"
 DEST = ROOT / "output/pdf"
 INK = colors.HexColor("#111111")
 NAVY = colors.HexColor("#193b58")
@@ -70,6 +71,10 @@ def build(author, netid):
     ret = t6.set_index("measure")
     case = e["case"]
     candidates = pd.read_csv(RESULTS/"measure_contrast_candidates.csv")
+    portfolio_summary = pd.read_csv(PORTFOLIO/"portfolio_summary.csv")
+    portfolio_performance = pd.read_csv(PORTFOLIO/"quintile_performance.csv")
+    portfolio_extremes = pd.read_csv(PORTFOLIO/"latest_top_bottom_three.csv")
+    portfolio_ends = portfolio_summary.set_index(["signal","quintile"])["ending_value"]
     pypl = candidates.loc[candidates.accession.eq(case["accession"])].iloc[0]
     labels = {"negative_prop":"Negative %", "negative_tfidf":"Negative TF-IDF",
               "uncertainty_prop":"Uncertainty %","uncertainty_tfidf":"Uncertainty TF-IDF"}
@@ -109,8 +114,9 @@ def build(author, netid):
           'there is no stemming or stopword removal. No filing failed parsing.','Note'),
         PageBreak(),
         P("3. Word lists","Section"),
-        P(f'The Loughran-McDonald dictionary supplies 2,355 Negative words and 297 Uncertainty words; '
-          f'{s["lexicon_overlap"]} occur in both lists. Negative words describe adverse conditions; uncertainty '
+        P(f'The March 2026 Loughran-McDonald Master Dictionary 1993-2025 supplies 2,345 active Negative '
+          f'words and 297 active Uncertainty words; {s["lexicon_overlap"]} occur in both lists. Ten Negative '
+          f'entries marked with a negative removal year are excluded. Negative words describe adverse conditions; uncertainty '
           'words qualify what may happen or what is known. Shared words and shared disclosure topics mean these '
           'are conceptually different but empirically related measures.'),
         P("4. Method","Section"),
@@ -306,9 +312,10 @@ def build(author, netid):
         'trends among survivors need not describe the historical ARK portfolio or the broader market. Only 20 filing '
         'quarters identify the aggregate time trend, so Newey-West inference is approximate in a short series.'),
         P('The dictionary does not read context, negation or whether a sentence is new. The concentration of Uncertainty '
-          'counts and the PayPal repetition result show that template language can drive scores. TF-IDF uses the full '
-          'analysis corpus to calculate document frequencies, so it is retrospective rather than investable in real time. '
-          'Daily event timing cannot separate filing text from simultaneous earnings news, and the multi-class share '
+          'counts and the PayPal repetition result show that template language can drive scores. The regression tables use '
+          'the full analysis corpus to calculate TF-IDF document frequencies, so those scores are retrospective. The '
+          'portfolio extension recomputes IDF using only filings public at each date, but it still inherits the report\'s '
+          'filtered estimation sample. Daily event timing cannot separate filing text from simultaneous earnings news, and the multi-class share '
           'aggregation used for size is an approximation.'),
         P('The current report includes aggregate and within-company trends; full-sample and form-specific volatility '
           'models with and without prior volatility; and SPY and ARKK return benchmarks. Multiple related tests raise '
@@ -327,6 +334,88 @@ def build(author, netid):
           'would restore firms later sold, delisted or failed and directly test whether the conclusions survive outside '
           'today\'s selected survivors. The cost is reconciling ticker, name and CIK changes and recovering filings plus '
           'delisting-adjusted prices; missing archives may also shrink the usable sample.'),
+        P('I would also extend the portfolio history and test the apparent rotation directly: does Q5 catch up after '
+          'Q1-Q5 becomes unusually wide, and do reversals line up with earnings seasons or market-volatility regimes? '
+          'I would evaluate the rule after transaction costs and in a genuinely out-of-sample period. The present '
+          'four-year chart is too short to treat midyear or year-end movements as a seasonal strategy.'),
+        PageBreak(),
+        P("11. Exploratory portfolio sorts","Section"),
+        P('As an extension of the report results, I update each issuer\'s language score when a retained filing becomes '
+          'public and sort the available companies into five equal-weight portfolios. TF-IDF document frequencies use '
+          'only filings public by that time. Scores are first ranked against earlier filings of the same form and then '
+          'against earlier filings from the same calendar filing quarter, allowing 10-K and 10-Q observations to enter '
+          'one ranking while controlling their systematic level differences. Q1 contains the lowest language scores and '
+          'Q5 the highest. Portfolios rebalance at the first eligible market open and use adjusted raw stock returns.'),
+        P('Figure 2. Filing-language quintile portfolios, 2022-2025','Note'),
+        Image(str(PORTFOLIO/"report_portfolio_quintiles.png"),width=w,height=w*8.4/11),
+        P(f'Negative Q1 ends at ${portfolio_ends.loc[("negative",1)]:.2f} and Q5 at '
+          f'${portfolio_ends.loc[("negative",5)]:.2f}; Uncertainty Q1 ends at '
+          f'${portfolio_ends.loc[("uncertainty",1)]:.2f} and Q5 at '
+          f'${portfolio_ends.loc[("uncertainty",5)]:.2f}. The ordering is '
+          'strongest between the low- and high-language groups, but it is not perfectly monotonic across all five '
+          'portfolios. These are descriptive extensions of the same 1,536-filing report sample. The sample was selected '
+          'for the assignment regressions, and transaction costs are omitted, so the figure is not a clean out-of-sample '
+          'trading test.','Note'),
+        PageBreak(),
+        P('Table 7. Quintile portfolio performance','Section')]
+    performance_rows=[]
+    for _,r in portfolio_performance.iterrows():
+        performance_rows.append([
+            "Negative" if r.signal == "negative" else "Uncertainty",
+            f"Q{int(r.quintile)}",
+            f"{float(r.total_return_pct):.1f}%",
+            f"{float(r.annualized_return_pct):.1f}%",
+            f"{float(r.sharpe_ratio_rf_0):.2f}",
+            f"{float(r.maximum_drawdown_pct):.1f}%",
+        ])
+    story.append(tab(
+        ["Measure","Portfolio","Total return","Annualized return","Sharpe ratio","Maximum drawdown"],
+        performance_rows,[94,56,82,91,79,113],True
+    ))
+    story += [
+        P('Returns cover January 3, 2022 through December 31, 2025. Annualized return compounds the ending value over '
+          '1,003 trading days. Sharpe ratios use daily returns, 252 trading days and a zero risk-free rate. Transaction '
+          'costs are omitted.','Note'),
+        P('Figure 3. Uncertainty Q1 versus SPY and ARKK','Note'),
+        Image(str(PORTFOLIO/"report_q1_vs_spy_arkk.png"),width=w,height=w*6.2/11),
+        P('Uncertainty Q1 contains the lowest 20% of adjusted uncertainty scores. I deduct 10 basis points for each '
+          '100% of one-way turnover; the five-portfolio results in Figure 2 and Table 7 remain gross of costs. The '
+          'comparison normalizes each series to one at the first portfolio close. Uncertainty Q1 outperforms SPY and '
+          'ARKK in this selected sample, but the result still inherits the sample-selection limitations stated above.','Note'),
+        PageBreak(),
+        P('Long-short results','Section'),
+        P('Figure 4. Low-minus-high Uncertainty portfolio','Note'),
+        Image(str(PORTFOLIO/"uncertainty_long_short_only.png"),width=485,height=485*6.2/11),
+        P('When I first saw the fairly clear ordering across the five Uncertainty portfolios, I expected a simple '
+          'long-short strategy to perform extremely well. Figure 4 shows why that conclusion is too strong. The strategy '
+          'is profitable overall, but its path is unstable and includes repeated reversals. Low-Uncertainty companies do '
+          'not outperform continuously; high-Uncertainty companies periodically catch up. The chart suggests that some '
+          'of these catch-up episodes occur around parts of midyear and near year-end, but I do not find a strong or '
+          'repeatable seasonal rule in this four-year sample.','Note'),
+        P('Figure 5. Low-minus-high Negative portfolio','Note'),
+        Image(str(PORTFOLIO/"negative_long_short_only.png"),width=485,height=485*6.2/11),
+        P('Negative language shows a similar pattern and perhaps a clearer change in trend. From 2022 through much of '
+          '2024, low-Negative companies generally outperform high-Negative companies. After 2024, the spread reverses '
+          'and gives back a large part of its earlier gains. The five-portfolio ordering therefore does not translate '
+          'into a stable long-short return in every subperiod.','Note'),
+        PageBreak(),
+        P('Table 8. Latest companies at each language-score extreme','Section'),
+        P('The table reports the three lowest and three highest current adjusted percentiles for each measure as of '
+          'December 31, 2025. Percentiles use the latest retained filing for each company.','Note')]
+    extreme_rows=[]
+    for _,r in portfolio_extremes.iterrows():
+        extreme_rows.append([
+            "Negative" if r.signal == "negative" else "Uncertainty",
+            "Lowest" if int(r.quintile) == 1 else "Highest",
+            escape(str(r.ticker)), escape(str(r.company)), str(r.filing_date),
+            f"{float(r.adjusted_percentile):.1f}",
+        ])
+    story.append(tab(["Measure","Extreme","Ticker","Company","Latest filing","Percentile"],
+                     extreme_rows,[72,52,43,190,86,72],True))
+    story += [
+        P('The endpoint lists are screening results, not buy or sell recommendations. A low score can reflect concise '
+          'or repetitive disclosure, while a high score can reflect the company\'s business model or reporting detail '
+          'rather than new information.','Note'),
         P('Sources: Loughran and McDonald (2011), Journal of Finance 66, 35-65; instructor assignment sheet and '
           '<link href="https://github.com/anmolsingh0219/FRE-GY-7871A-Assignment1">repository instructions</link>; '
           'SEC EDGAR; Yahoo Finance. Saved calculations, full regression coefficients and filing-text comparisons are in '
