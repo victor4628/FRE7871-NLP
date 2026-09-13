@@ -82,7 +82,8 @@ def build(author, netid):
     story = [
         P("Uncertainty and Sentiment in ARK Company Filings","ReportTitle"),
         P(f'{escape(author)} | NetID: {escape(netid)} | Fall 2026<br/>'
-          '<link href="https://github.com/victor4628/FRE7871-NLP">github.com/victor4628/FRE7871-NLP</link>',"Note"),
+          '<link href="https://github.com/victor4628/FRE7871-NLP/tree/main/assignment1">'
+          'github.com/victor4628/FRE7871-NLP/tree/main/assignment1</link>',"Note"),
         P("1. What I did","Section"),
         P(f'I study {s["core_filings"]:,} filings from {s["core_firms"]} companies in the ARK holdings universe, '
           'submitted during 2021-2025. I count negative and uncertainty words, compare proportions with TF-IDF, '
