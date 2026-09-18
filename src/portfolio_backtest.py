@@ -201,8 +201,14 @@ def run_event_portfolios(
     signal: str,
     start_date: str = "2022-01-01",
     end_date: str = "2025-12-31",
+    weighting: str = "equal",
+    market_caps: pd.DataFrame | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Run five self-contained equal-weight portfolios rebalanced at event opens."""
+    """Run five portfolios with target weights reset only at event opens."""
+    if weighting not in {"equal", "score", "market_cap"}:
+        raise ValueError(f"Unknown weighting: {weighting}")
+    if weighting == "market_cap" and market_caps is None:
+        raise ValueError("Market-cap weighting requires point-in-time market caps")
     score_column = f"{signal}_adjusted_percentile"
     if score_column not in events:
         raise ValueError(f"Missing score column: {score_column}")
@@ -275,12 +281,27 @@ def run_event_portfolios(
                     pretrade_weights = {}
                     initial_formation[quintile] = True
                 memberships[quintile] = new_groups[quintile]
-                target_weight = 1.0 / len(memberships[quintile])
+                tickers = memberships[quintile]
+                if weighting == "equal":
+                    values = pd.Series(1.0, index=tickers)
+                elif weighting == "score":
+                    values = pd.Series({ticker: current_scores[ticker] for ticker in tickers})
+                else:
+                    values = market_caps.loc[day, tickers].astype(float)
+                if not np.isfinite(values).all() or (values < 0).any():
+                    raise ValueError(f"Invalid {weighting} weights for Q{quintile} on {day}")
+                if weighting == "market_cap" and (values <= 0).any():
+                    raise ValueError(f"Missing positive market cap for Q{quintile} on {day}")
+                # A group of zero scores has no score-proportional allocation;
+                # equal weights are the neutral fallback in that special case.
+                if values.sum() == 0:
+                    values[:] = 1.0
+                target_weights = (values / values.sum()).to_dict()
                 if pretrade_weights:
                     names = set(pretrade_weights) | set(memberships[quintile])
                     turnover_today[quintile] = 0.5 * sum(
                         abs(
-                            (target_weight if ticker in memberships[quintile] else 0.0)
+                            target_weights.get(ticker, 0.0)
                             - pretrade_weights.get(ticker, 0.0)
                         )
                         for ticker in names
@@ -289,9 +310,8 @@ def run_event_portfolios(
                     # Initial capital deployment is reported separately and is
                     # excluded from average rebalancing turnover.
                     turnover_today[quintile] = np.nan
-                allocation = open_value / len(memberships[quintile])
                 shares[quintile] = {
-                    ticker: allocation / float(actual_open[ticker])
+                    ticker: open_value * target_weights[ticker] / float(actual_open[ticker])
                     for ticker in memberships[quintile]
                 }
             pending_rebalance = False

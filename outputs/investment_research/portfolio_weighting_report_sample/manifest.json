@@ -1,0 +1,11 @@
+{
+  "source": "outputs\\investment_research\\portfolio_trial_report_sample",
+  "signal": "Uncertainty adjusted point-in-time TF-IDF percentile",
+  "grouping": "Unchanged quintile assignments; 10-K and 10-Q combined",
+  "market_cap": "Latest publicly available filing shares, split-aligned, times prior observed nominal close",
+  "score_weights": "Adjusted percentile divided by the group percentile sum; equal weights only if all scores are zero",
+  "execution": "Same filing-event eligible opens as original; weights drift between rebalances",
+  "fees": "None",
+  "equal_weight_reproduction": "Passed: all saved daily NAV observations reproduced",
+  "limitations": "Same report-selected sample and survivorship limitation as first version"
+}

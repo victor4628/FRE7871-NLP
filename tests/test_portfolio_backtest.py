@@ -141,3 +141,24 @@ def test_quintile_performance_uses_nav_for_total_return_and_daily_returns_for_sh
     assert result["total_return_pct"] == pytest.approx(-1.0)
     assert result["maximum_drawdown_pct"] == pytest.approx(-10.0)
     assert result["observations"] == 3
+
+
+def test_weighted_portfolios_allocate_by_group_market_cap_and_score():
+    tickers = [f"T{i:02d}" for i in range(25)]
+    day = pd.Timestamp("2022-01-03")
+    events = pd.DataFrame({
+        "ticker": tickers, "accession": tickers,
+        "acceptance_ts": pd.to_datetime(["2021-12-30T12:00:00Z"] * 25),
+        "effective_open": pd.to_datetime(["2021-12-31"] * 25),
+        "uncertainty_adjusted_percentile": np.arange(25, dtype=float),
+    })
+    opens = pd.DataFrame(100.0, index=[day], columns=tickers)
+    closes = opens.copy()
+    closes.loc[day, "T04"] = 110.0
+    closes.loc[day, "T24"] = 110.0
+    caps = pd.DataFrame(1.0, index=[day], columns=tickers)
+    caps.loc[day, "T24"] = 6.0
+    cap_paths, _ = run_event_portfolios(events, opens, closes, "uncertainty", weighting="market_cap", market_caps=caps)
+    score_paths, _ = run_event_portfolios(events, opens, closes, "uncertainty", weighting="score")
+    assert cap_paths.set_index("quintile").loc[5, "nav"] == pytest.approx(1.06)
+    assert score_paths.set_index("quintile").loc[1, "nav"] == pytest.approx(1.04)
